@@ -1,0 +1,17 @@
+Base:
+* CONST - fetches a constant from the constant pool and pushes it to the stack
+* GET - fetches a variable from the interpreter
+* TEXT - pushes a text string
+* BRANCH - if top stack is `true`, GOTO second stack
+
+Arithmetic:
+* NEGATE - negates top value on the stack
+* ADD - adds
+* SUBTRACT - subtracts
+* MULTIPLY
+* DIVIDE
+
+Boolean:
+* AND
+* OR
+* NOT

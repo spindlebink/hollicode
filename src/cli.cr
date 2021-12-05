@@ -24,8 +24,10 @@ File.open(input_file, "r") do |file|
   scanner.scan contents
   parser.parse scanner.tokens
 
-  # code_generator.compile parser.parse_root
-  # File.open(output_file, "w") do |out_file|
-    # out_file << code_generator.get_string
-  # end
+  code_generator = Hollicode::JSONCodeGenerator.new
+  code_generator.generate parser.parse_root
+
+  File.open(output_file, "w") do |out_file|
+    out_file << code_generator.get_generated
+  end
 end

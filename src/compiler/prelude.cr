@@ -23,6 +23,9 @@ module Hollicode
     StringLiteral
     BooleanLiteral
     NilLiteral
+    If
+    Else
+    Option
     GreaterThan
     LessThan
     GreaterThanOrEqual
@@ -132,5 +135,5 @@ module Hollicode
 
   class Scanner; end
   class Parser; end
-  class CodeGenerator; end
+  class BytecodeGenerator; end
 end

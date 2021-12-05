@@ -204,10 +204,8 @@ module Hollicode
 
     # Scans token for a word.
     private def scan_word
-      while peek == '_' || peek.try &.letter?
-        advance
-      end
-      while peek.try &.number?
+      advance
+      while peek == '_' || peek.try &.letter? || peek.try &.number?
         advance
       end
       word = get_token_string
@@ -223,6 +221,12 @@ module Hollicode
         push_token TokenType::BooleanLiteral
       elsif word == "nil"
         push_token TokenType::NilLiteral
+      elsif word == "if"
+        push_token TokenType::If
+      elsif word == "else"
+        push_token TokenType::Else
+      elsif word == "option"
+        push_token TokenType::Option
       else
         # On the other hand, we handle differentiation between function calls
         # and if/elseif/else statements in the parser
