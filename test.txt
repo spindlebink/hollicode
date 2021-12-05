@@ -1,0 +1,33 @@
+# Conversation beginning
+	[if new]
+		Hello there.
+		Don't believe I've seen you round here before.
+		What can I do for you?
+	[else]
+		What else can I do for you?
+	[option] Where can I find a supermarket?
+		Right over there.
+		-> Conversation beginning
+	[option] Can you tell me anything about...
+		-> Tell me about...
+	[if not has_said_hey]
+		[option] Just saying hey.
+			Hey yourself.
+			[set has_said_hey]
+			-> Conversation beginning
+
+# Tell me about...
+	[option] ...the best way to toast a 'mallow?
+		(She scratches her head.)
+		Well...I suppose you just hold it over the fire?
+		But not too close, you know?
+		-> Conversation beginning
+	[option] ...calculus?
+		Heh, you've come to the right place.
+		Let's get right into it, shall we?
+		[fade_to_black]
+		[affect_morale -1]
+		-> Conversation beginning
+	[option] ...the impending apocalypse?
+		First I've heard about it.
+		-> Conversation beginning
