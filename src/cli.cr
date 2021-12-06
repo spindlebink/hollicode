@@ -23,9 +23,8 @@ File.open(input_file, "r") do |file|
     STDERR << "Compilation failed. Exiting." << "\n"
     exit 1
   else
-    puts compiler.get_plain_text
+    File.open(output_file, "w") do |out_file|
+      out_file << compiler.get_plain_text
+    end
   end
-  # File.open(output_file, "w") do |out_file|
-  #   out_file << code_generator.get_generated
-  # end
 end

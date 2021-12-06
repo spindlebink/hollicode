@@ -1,4 +1,4 @@
-local code = [[BOOL	true
+local code = [[BOOL	false
 FJMP	9
 POP
 STR	I should be said if true

@@ -160,17 +160,16 @@ module Hollicode
         hop_else = @bytecode.push_jump 0
         hop_start = @bytecode.num_ops
       jump_op.value = @bytecode.num_ops - starting_ops
-      
-      @bytecode.push_not
-      else_starting_ops = @bytecode.num_ops
-      else_jump_op = @bytecode.push_jump_if_false 0
-        @bytecode.push_pop
-        if peek.type == TokenType::OpenExpression && peek(1).type == TokenType::Else
-          advance 2
-          consume TokenType::CloseExpression, "unterminated 'else' directive"
-          parse_indented_block
-        end
-      else_jump_op.value = @bytecode.num_ops - else_starting_ops
+      # @bytecode.push_not
+      # else_starting_ops = @bytecode.num_ops
+      # else_jump_op = @bytecode.push_jump_if_false 0
+      @bytecode.push_pop
+      if peek.type == TokenType::OpenExpression && peek(1).type == TokenType::Else
+        advance 2
+        consume TokenType::CloseExpression, "unterminated 'else' directive"
+        parse_indented_block
+      end
+      # else_jump_op.value = @bytecode.num_ops - else_starting_ops
       hop_else.value = @bytecode.num_ops - hop_start + 1
     end
 

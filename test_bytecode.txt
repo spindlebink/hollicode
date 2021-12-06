@@ -1,6 +1,0 @@
-PUSHV "new"
-BRANCH 3 3
-TEXT "Hello there."
-TEXT "Don't believe I've seen you round here before."
-TEXT "What can I do for you?"
-TEXT "What else can I do for you?"
