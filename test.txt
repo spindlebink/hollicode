@@ -1,0 +1,7 @@
+[if true]
+	I should be said if true
+	[do thing1, thing2]
+[else]
+	Say another thing
+	And another
+Say regardless

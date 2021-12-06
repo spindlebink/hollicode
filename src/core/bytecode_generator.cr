@@ -4,28 +4,11 @@
 
 module Hollicode
   class BytecodeGenerator
-    abstract struct Operation; end
+    abstract class Operation; end
 
-    struct NumberConstantOp < Operation
-      getter value : Float64
-      def initialize(@value)
-      end
-    end
-
-    struct StringConstantOp < Operation
-      getter value : String
-      def initialize(@value)
-      end
-    end
-
-    struct BooleanConstantOp < Operation
-      getter value : Bool
-      def initialize(@value)
-      end
-    end
-
-    macro define_no_args_op(method_name, operation_name)
-      struct {{operation_name}} < Operation
+    macro define_no_args_op(op_code, method_name, operation_name)
+      class {{operation_name}} < Operation
+        getter op_code = {{op_code}}
       end
 
       def {{method_name}}
@@ -33,28 +16,85 @@ module Hollicode
       end
     end
 
-    define_no_args_op push_return, ReturnOp
-    define_no_args_op push_negate, NegateOp
-    define_no_args_op push_not, NotOp
-    define_no_args_op push_add, AddOp
-    define_no_args_op push_subtract, SubtractOp
-    define_no_args_op push_multiply, MultiplyOp
-    define_no_args_op push_divide, DivideOp
-    define_no_args_op push_true, PushTrueOp
-    define_no_args_op push_false, PushFalseOp
+    macro define_single_arg_op(op_code, method_name, operation_name, arg_type)
+      class {{operation_name}} < Operation
+        getter op_code = {{op_code}}
+        property value : {{arg_type}}
+        def initialize(@value)
+        end
+      end
+
+      def {{method_name}}(value : {{arg_type}})
+        op = {{operation_name}}.new value
+        @operations << op
+        op
+      end
+    end
+
+    define_no_args_op    0x00,    push_return,        ReturnOp
+    define_no_args_op    0x01,    push_pop,           PopOp
+    define_single_arg_op 0x02,    push_jump,          JumpOp,            Int32
+    define_single_arg_op 0x03,    push_jump_if_false, JumpIfFalseOp,     Int32
+    define_no_args_op    0x10,    push_nil,           NilOp
+    define_single_arg_op 0x11,    push_boolean,       BooleanConstantOp, Bool
+    define_single_arg_op 0x12,    push_number,        NumberConstantOp,  Float64
+    define_single_arg_op 0x13,    push_string,        StringConstantOp,  String
+    define_single_arg_op 0x14,    push_variable,      VariableOp,        String
+    define_no_args_op    0x20,    push_not,           NotOp
+    define_no_args_op    0x21,    push_negate,        NegateOp
+    define_single_arg_op 0x22,    push_call,          CallOp,            Int32
+    define_no_args_op    0x23,    push_add,           AddOp
+    define_no_args_op    0x24,    push_subtract,      SubtractOp
+    define_no_args_op    0x25,    push_multiply,      MultiplyOp
+    define_no_args_op    0x26,    push_divide,        DivideOp
+    define_no_args_op    0x30,    push_echo,          EchoOp
+
+    @op_names = {
+      0x00 => "RET",
+      0x01 => "POP",
+      0x02 => "JMP",
+      0x03 => "FJMP",
+      0x10 => "NIL",
+      0x11 => "BOOL",
+      0x12 => "NUM",
+      0x13 => "STR",
+      0x14 => "VAR",
+      0x20 => "NOT",
+      0x21 => "NEG",
+      0x22 => "CALL",
+      0x23 => "ADD",
+      0x24 => "SUB",
+      0x25 => "MULT",
+      0x26 => "DIV",
+      0x30 => "SAY"
+    }
 
     @operations = [] of Operation
 
-    def push_number(value)
-      @operations << NumberConstantOp.new value
+    def num_ops
+      @operations.size
     end
 
-    def push_string(value)
-      @operations << StringConstantOp.new value
+    def get_plain_text
+      String.build do |str|
+        @operations.each do |operation|
+          str << @op_names[operation.op_code]
+          if operation.responds_to? :value
+            str << "\t" << operation.value
+          end
+          str << "\n"
+        end
+      end
     end
 
-    def push_boolean(value)
-      @operations << BooleanConstantOp.new value
+    def debug_print
+      @operations.each do |operation|
+        if operation.responds_to? :value
+          print operation.class.to_s, " ", operation.value, "\n"
+        else
+          puts operation.class.to_s
+        end
+      end
     end
   end
 end

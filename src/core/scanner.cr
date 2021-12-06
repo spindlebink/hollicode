@@ -25,6 +25,7 @@ module Hollicode
     NilLiteral
     If
     Else
+    Return
     Option
     GreaterThan
     LessThan
@@ -137,6 +138,7 @@ module Hollicode
         @newline = true
         @current_line += 1
         advance
+        @start_index = @current_index
       else
         if @newline
           @newline = false
@@ -317,6 +319,8 @@ module Hollicode
         push_token TokenType::If
       elsif word == "else"
         push_token TokenType::Else
+      elsif word == "return"
+        push_token TokenType::Return
       elsif word == "option"
         push_token TokenType::Option
       else
@@ -356,7 +360,7 @@ module Hollicode
 
     # Advances to the next new line or end of file.
     private def advance_to_newline
-      while !peek.nil? && peek != '\n'
+      while peek != Char::ZERO && peek != '\n'
         advance
       end
     end

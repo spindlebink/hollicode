@@ -6,6 +6,85 @@ require "./scanner"
 require "./bytecode_generator"
 
 module Hollicode
+  class Statement
+    property children = [] of Statement
+
+    class RootStatement < Statement
+    end
+
+    class DirectiveStatement < Statement
+      getter start : Expression
+      getter tag : Token
+      property arguments = [] of Expression
+      def initialize(@start, @tag = Token.new TokenType::Undefined, "", 0)
+      end
+    end
+
+    # A line of text.
+    class TextLineStatement < Statement
+      getter value : Token
+      def initialize(@value)
+      end
+    end
+
+    # An anchor.
+    class AnchorStatement < Statement
+      getter value : Token
+      def initialize(@value)
+      end
+    end
+
+    # A goto statement.
+    class GotoStatement < Statement
+      getter value : Token
+      def initialize(@value)
+      end
+    end
+  end
+
+  # Expression class.
+  #
+  # Expressions are the primary syntax tree node found in directives. They are a
+  # more traditional parsed format which generally map to...well, *expressions*.
+  abstract class Expression    
+    UNDEFINED = Empty.new
+
+    # Empty expression.
+    class Empty < Expression
+    end
+
+    # Binary expression.
+    class Binary < Expression
+      getter left : Expression
+      getter operator : Token
+      getter right : Expression
+      def initialize(@left, @operator, @right)
+      end
+    end
+
+    # Unary expression.
+    class Unary < Expression
+      getter operator : Token
+      getter right : Expression
+      def initialize(@operator, @right)
+      end
+    end
+
+    # Grouped expression.
+    class Grouping < Expression
+      getter expression : Expression
+      def initialize(@expression)
+      end
+    end
+
+    # Terminal (i.e. non-reduceable) expression.
+    class Terminal < Expression
+      getter value : Token
+      def initialize(@value)
+      end
+    end
+  end
+
   class Compiler
     # NEAR_TOKEN_ERROR_TRUNCATE_LIMIT = 16
 
@@ -16,35 +95,6 @@ module Hollicode
     @index = 0
     @compilation_okay = true
 
-    enum Precedence
-      None
-      Assignment
-      Or
-      And
-      Equality
-      Comparison
-      Term
-      Factor
-      Unary
-      Call
-      Primary
-    end
-
-    alias ParseRule = NamedTuple(prefix: Proc(Nil) | Nil, infix: Proc(Nil) | Nil, precedence: Precedence)
-    @parse_rules : Hash(TokenType, ParseRule)
-    
-    def initialize
-      @parse_rules = {
-        TokenType::OpenParenthesis     => {prefix: ->parse_grouping, infix: nil, precedence: Precedence::None},
-        TokenType::Minus               => {prefix: ->parse_unary, infix: ->parse_binary, precedence: Precedence::Term},
-        TokenType::Plus                => {prefix: nil, infix: ->parse_binary, precedence: Precedence::Term},
-        TokenType::Divide              => {prefix: nil, infix: ->parse_binary, precedence: Precedence::Factor},
-        TokenType::Multiply            => {prefix: nil, infix: ->parse_binary, precedence: Precedence::Factor},
-        TokenType::NumberLiteral       => {prefix: ->parse_number, infix: nil, precedence: Precedence::None},
-        TokenType::Boolean             => {prefix: ->parse_literal, infix: nil, precedence: Precedence::None}
-      }
-    end
-
     # Compiles a string of source into bytecode.
     def compile(@source_string)
       @compilation_okay = true
@@ -53,88 +103,201 @@ module Hollicode
       @scanner.tokens.each do |token|
         puts token
       end
-      # expression
+      
+      parse_root
+      @bytecode.debug_print
 
       @compilation_okay
     end
 
-    # Compiles an expression.
-    def parse_expression
-      parse_precedence Precedence::Assignment
-      return
-    end
-
-    # Parses a grouped expression.
-    def parse_grouping
-      consume TokenType::OpenParenthesis
-      parse_expression
-      consume TokenType::CloseParenthesis
-      return
-    end
-
-    # Parses a unary operation.
-    def parse_unary
-      operator_type = peek(-1).type
-      parse_precedence Precedence::Unary
-      case operator_type
-      when TokenType::Minus
-        @bytecode.push_negate
-      when TokenType::Not
-        @bytecode.push_not
-      end
-      return
-    end
-
-    # Parses a binary expression.
-    def parse_binary
-      operator_type = peek(-1).type
-      rule = get_rule operator_type
-      parse_precedence rule[:precedence] + 1
-      case operator_type
-      when TokenType::Plus
-        @bytecode.push_add
-      when TokenType::Minus
-        @bytecode.push_subtract
-      when TokenType::Multiply
-        @bytecode.push_multiply
-      when TokenType::Divide
-        @bytecode.push_divide
-      end
-      return
-    end
-
-    # Parses a number constant.
-    def parse_number
-      value = peek(-1).lexeme.to_f
-      @bytecode.push_number value
-      return
-    end
-
-    def parse_precedence(precedence)
-      advance
-      prefix_rule = get_rule(peek(-1).type)[:prefix]
-      if prefix_rule.nil?
-        puts "expect expression"
-        return
-      end
-      
-      prefix_rule.call
-      
-      while precedence <= get_rule(peek.type).precedence
-        advance
-        infix_rule = get_rule peek(-1).infix
-        infix_rule.call
-      end
-
-      return
-    end
-
-    # Gets the parser rule for a given token type.
-    private def get_rule(token_type)
-      if rule = @parse_rules[token_type]?
-        rule
+    def get_plain_text
+      if @compilation_okay
+        @bytecode.get_plain_text
       else
-        {prefix: nil, infix: nil, precedence: Precedence::None}
+        ""
+      end
+    end
+
+    private def compile_expression(expr)
+      case expr
+      when Expression::Terminal
+        term = expr.as Expression::Terminal
+        case term.value.type
+        when TokenType::NumberLiteral
+          @bytecode.push_number term.value.lexeme.to_f
+        when TokenType::StringLiteral
+          @bytecode.push_string term.value.lexeme
+        when TokenType::BooleanLiteral
+          @bytecode.push_boolean term.value.lexeme == "true" ? true : false
+        when TokenType::NilLiteral
+          @bytecode.push_nil
+        when TokenType::Word
+          @bytecode.push_variable term.value.lexeme
+        end
+      end
+    end
+
+    private def compile_directive_start(expr, argument_count = 0)
+      case expr
+      when Expression::Terminal
+        term = expr.as Expression::Terminal
+        case term.value.type
+        when TokenType::If
+          compile_if term
+        when TokenType::Return
+          @bytecode.push_return
+        else
+          compile_call term, argument_count
+        end
+      end
+    end
+
+    private def compile_if(expr)
+      starting_ops = @bytecode.num_ops
+      jump_op = @bytecode.push_jump_if_false 0
+        @bytecode.push_pop
+        parse_indented_block
+        hop_else = @bytecode.push_jump 0
+        hop_start = @bytecode.num_ops
+      jump_op.value = @bytecode.num_ops - starting_ops
+      
+      @bytecode.push_not
+      else_starting_ops = @bytecode.num_ops
+      else_jump_op = @bytecode.push_jump_if_false 0
+        @bytecode.push_pop
+        if peek.type == TokenType::OpenExpression && peek(1).type == TokenType::Else
+          advance 2
+          consume TokenType::CloseExpression, "unterminated 'else' directive"
+          parse_indented_block
+        end
+      else_jump_op.value = @bytecode.num_ops - else_starting_ops
+      hop_else.value = @bytecode.num_ops - hop_start + 1
+    end
+
+    private def compile_call(expr, argument_count)
+      compile_expression expr
+      @bytecode.push_call argument_count
+    end
+
+    private def parse_root
+      while !peek.type.eof?
+        parse_statement
+      end
+    end
+
+    private def parse_indented_block
+      if match_any TokenType::Indent
+        while !peek.type.unindent? && !peek.type.eof?
+          parse_statement
+        end
+        consume TokenType::Unindent, "unknown indentation error"
+      end
+    end
+
+    private def parse_statement
+      if match_any TokenType::OpenExpression
+        start = parse_expression
+        arguments = [] of Expression
+        while !peek.type.close_expression? && !peek.type.eof?
+          argument = parse_expression
+          arguments << argument
+          if peek.type.close_expression?
+            # done
+          else
+            consume TokenType::Comma, "expected ',' between arguments"
+          end
+        end
+        consume TokenType::CloseExpression, "unterminated directive"
+        arguments.each do |argument|
+          compile_expression argument
+        end
+        compile_directive_start start, arguments.size
+      elsif match_any TokenType::TextLine
+        @bytecode.push_string peek(-1).lexeme
+        @bytecode.push_echo
+      else
+        advance
+      end
+    end
+
+    #
+    # Expression parsing
+    #
+    # Hollicode keeps track of two code formats, essentially--one simple
+    # notation used for anchors, text lines, and goto commands, and one more
+    # traditional syntax used in directives. When we come across a bracket, we
+    # sort of morph into expression parsing mode until we find the associated
+    # closing bracket.
+    #
+
+    private def parse_expression
+      parse_equality
+    end
+
+    # equality -> comparison ( ( != | == ) comparison )*
+    private def parse_equality
+      expr = parse_comparison
+      while match_any TokenType::NotEqual, TokenType::EqualEqual
+        operator = peek(-1).not_nil!
+        right = parse_comparison
+        expr = Expression::Binary.new expr, operator, right
+      end
+      expr
+    end
+
+    # comparison -> term ( ( > | >= | < | <= ) term )*
+    private def parse_comparison
+      expr = parse_term
+      while match_any TokenType::GreaterThan, TokenType::GreaterThanOrEqual, TokenType::LessThan, TokenType::LessThanOrEqual
+        operator = peek(-1).not_nil!
+        right = parse_term
+        expr = Expression::Binary.new expr, operator, right
+      end
+      expr
+    end
+
+    # term -> factor ( ( - | + ) factor )*
+    private def parse_term
+      expr = parse_factor
+      while match_any TokenType::Minus, TokenType::Plus
+        operator = peek(-1).not_nil!
+        right = parse_factor
+        expr = Expression::Binary.new expr, operator, right
+      end
+      expr
+    end
+
+    # factor -> unary ( ( / | * ) unary )*
+    private def parse_factor
+      expr = parse_unary
+      while match_any TokenType::Divide, TokenType::Multiply
+        operator = peek(-1).not_nil!
+        right = parse_unary
+        expr = Expression::Binary.new expr, operator, right
+      end
+      expr
+    end
+
+    # unary -> ( ( NOT | - ) unary )* primary
+    private def parse_unary
+      if match_any TokenType::Not, TokenType::Minus
+        operator = peek(-1).not_nil!
+        right = parse_unary
+        return Expression::Unary.new operator, right
+      end
+      parse_primary
+    end
+
+    # primary -> ( OPEN_PARENTHESIS expression CLOSE_PARENTHESIS ) | TERMINAL
+    private def parse_primary
+      if match_any TokenType::OpenParenthesis
+        expr = parse_expression
+        if !match_any TokenType::CloseParenthesis
+          puts "warning: unterminated parenthetical"
+        end
+        Expression::Grouping.new expr
+      else
+        Expression::Terminal.new advance.not_nil!
       end
     end
 
@@ -168,8 +331,9 @@ module Hollicode
     end
 
     # Consumes the current token and returns it.
-    private def advance
+    private def advance(num = 1)
       token = peek
+      count = num
       while true
         token = peek
         @index += 1
@@ -185,7 +349,10 @@ module Hollicode
           # end
           report_error token.line, error_message
         else
-          break
+          count -= 1
+          if count == 0
+            break
+          end
         end
       end
       return token
@@ -197,7 +364,7 @@ module Hollicode
       if token = @scanner.tokens[@index + how_far]?
         token
       else
-        Token.new TokenType::Undefined, "", -1
+        Token.new TokenType::EOF, "", -1
       end
     end
 
