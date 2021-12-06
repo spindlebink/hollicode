@@ -1,22 +1,17 @@
-local code = [[BOOL	false
-FJMP	9
-POP
-STR	I should be said if true
-SAY
-VAR	thing1
-VAR	thing2
-VAR	do
-CALL	2
-JMP	8
-NOT
-FJMP	6
-POP
-STR	Say another thing
-SAY
-STR	And another
-SAY
-STR	Say regardless
-SAY]]
+local args = {...}
+local code = ""
+if #args > 0 then
+	local inputFile = io.open(args[1], "r")
+	if not inputFile then
+		print("Error: could not open file '" .. args[1] .. "'.")
+		os.exit(1)
+	end
+	code = inputFile:read("*a")
+	inputFile:close()
+else
+	print("Error: no input file specified.")
+	os.exit(1)
+end
 
 local run, exec, getVariable
 local instructions = {}
@@ -57,7 +52,7 @@ function exec(instruction)
 	local incrementIP = true
 
 	if op == "POP" then
-		print("POP: ", stack[#stack])
+		-- print("POP: ", stack[#stack])
 		table.remove(stack)
 	elseif op == "BOOL" then
 		local boolString = instruction:match("[^%s]+$")
@@ -65,11 +60,11 @@ function exec(instruction)
 		if boolString == "false" then
 			value = false
 		end
-		print("BOOL: ", value)
+		-- print("BOOL: ", value)
 		table.insert(stack, value)
 	elseif op == "STR" then
 		local str = instruction:match(op .. "\t(.-)$")
-		print("STR: ", str)
+		-- print("STR: ", str)
 		table.insert(stack, str)
 	elseif op == "SAY" then
 		local str = table.remove(stack)

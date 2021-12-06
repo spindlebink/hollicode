@@ -1,4 +1,4 @@
-BOOL	true
+BOOL	false
 FJMP	9
 POP
 STR	I should be said if true
