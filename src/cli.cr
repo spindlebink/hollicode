@@ -16,7 +16,6 @@ OptionParser.parse(arguments) do |parser|
 end
 
 File.open(input_file, "r") do |file|
-  puts "Beginning...."
   compiler = Hollicode::Compiler.new
   success = compiler.compile file.gets_to_end
   if !success

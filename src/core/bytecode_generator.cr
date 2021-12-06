@@ -48,6 +48,8 @@ module Hollicode
     define_no_args_op    0x25,    push_multiply,      MultiplyOp
     define_no_args_op    0x26,    push_divide,        DivideOp
     define_no_args_op    0x30,    push_echo,          EchoOp
+    define_single_arg_op 0x31,    push_option,        OptionOp,          Int32
+    define_no_args_op    0x32,    push_wait,          WaitOp
 
     @op_names = {
       0x00 => "RET",
@@ -66,7 +68,9 @@ module Hollicode
       0x24 => "SUB",
       0x25 => "MULT",
       0x26 => "DIV",
-      0x30 => "SAY"
+      0x30 => "ECHO",
+      0x31 => "OPT",
+      0x32 => "WAIT"
     }
 
     @operations = [] of Operation

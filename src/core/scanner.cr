@@ -9,7 +9,7 @@ module Hollicode
     Indent
     Unindent
     TextLine
-    ExpressionTag
+    DirectiveTag
     Anchor
     Goto
     OpenExpression
@@ -25,8 +25,8 @@ module Hollicode
     NilLiteral
     If
     Else
-    Return
     Option
+    Wait
     GreaterThan
     LessThan
     GreaterThanOrEqual
@@ -43,6 +43,7 @@ module Hollicode
     Multiply
 
     Error
+    BOF
     EOF
   end
 
@@ -75,6 +76,7 @@ module Hollicode
       @indent_stack.clear
       @indent_stack << 0
       @tokens.clear
+      @tokens << Token.new TokenType::BOF, lexeme = "", line = 0
       @current_line = 1
       @start_index = 0
       @current_index = 0
@@ -87,6 +89,10 @@ module Hollicode
         @indent_stack.pop
       end
       push_custom_token TokenType::EOF
+
+      # @tokens.each do |token|
+      #   puts token.type
+      # end
     end
 
     # Scans the next token in the source string.
@@ -234,7 +240,7 @@ module Hollicode
             while peek != Char::ZERO && peek != '\n'
               advance
             end
-            push_token TokenType::ExpressionTag
+            push_token TokenType::DirectiveTag
           end
           return
         end
@@ -319,8 +325,8 @@ module Hollicode
         push_token TokenType::If
       elsif word == "else"
         push_token TokenType::Else
-      elsif word == "return"
-        push_token TokenType::Return
+      elsif word == "wait"
+        push_token TokenType::Wait
       elsif word == "option"
         push_token TokenType::Option
       else
