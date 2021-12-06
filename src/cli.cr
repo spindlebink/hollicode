@@ -1,5 +1,5 @@
 require "option_parser"
-require "./compiler"
+require "./core/compiler"
 
 input_file = ""
 output_file = ""
@@ -16,18 +16,15 @@ OptionParser.parse(arguments) do |parser|
 end
 
 File.open(input_file, "r") do |file|
-  scanner = Hollicode::Scanner.new
-  parser = Hollicode::Parser.new
-
-  contents = file.gets_to_end
-
-  scanner.scan contents
-  parser.parse scanner.tokens
-
-  code_generator = Hollicode::JSONCodeGenerator.new
-  code_generator.generate parser.parse_root
-
-  File.open(output_file, "w") do |out_file|
-    out_file << code_generator.get_generated
+  puts "Beginning...."
+  compiler = Hollicode::Compiler.new
+  success = compiler.compile file.gets_to_end
+  if !success
+    STDERR << "Compilation failed. Exiting." << "\n"
+    exit 1
+  else
   end
+  # File.open(output_file, "w") do |out_file|
+  #   out_file << code_generator.get_generated
+  # end
 end

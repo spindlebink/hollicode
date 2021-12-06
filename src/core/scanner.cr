@@ -3,14 +3,64 @@
 #
 
 module Hollicode
+  # Valid types of tokens.
+  enum Hollicode::TokenType
+    Undefined
+    Indent
+    Unindent
+    TextLine
+    ExpressionTag
+    Anchor
+    Goto
+    OpenExpression
+    CloseExpression    
+    OpenParenthesis
+    CloseParenthesis
+    Word
+    Dot
+    Comma
+    NumberLiteral
+    StringLiteral
+    BooleanLiteral
+    NilLiteral
+    If
+    Else
+    Option
+    GreaterThan
+    LessThan
+    GreaterThanOrEqual
+    LessThanOrEqual
+    Equal
+    EqualEqual
+    NotEqual
+    Not
+    And
+    Or
+    Plus
+    Minus
+    Divide
+    Multiply
+
+    Error
+    EOF
+  end
+
+  # Token struct
+  record Token, type = TokenType::Undefined, lexeme = "", line = 0
+
   # Scanner class. Takes a string of code and produces an array of tokens.
   class Scanner
     TAB_SIZE = 8
+    ERROR_MESSAGE_BAD_UNINDENT = "unmatched indentation level"
+    ERROR_MESSAGE_UNTERMINATED_EXPRESSION = "mismatched expression brackets"
+    ERROR_MESSAGE_UNTERMINATED_PARENTHESES = "mismatched parentheses"
+    ERROR_MESSAGE_UNTERMINATED_STRING = "unterminated string"
+    ERROR_MESSAGE_MIXED_INDENTATION = "mixed tabs and spaces"
 
     @source = ""
     @indent_stack = [] of Int32
     @tokens = Array(Token).new
-    @current_line = 0
+    @current_line = 1
     @start_index = 0
     @current_index = 0
 
@@ -24,7 +74,7 @@ module Hollicode
       @indent_stack.clear
       @indent_stack << 0
       @tokens.clear
-      @current_line = 0
+      @current_line = 1
       @start_index = 0
       @current_index = 0
       @newline = true
@@ -35,83 +85,85 @@ module Hollicode
         push_custom_token TokenType::Unindent
         @indent_stack.pop
       end
+      push_custom_token TokenType::EOF
     end
 
     # Scans the next token in the source string.
     private def scan_next
       c = peek
-      if !c.nil?
-        case c
-        when ' ', '\t'
-          if @newline
-            @newline = false
-            # https://docs.python.org/3/reference/lexical_analysis.html#indentation
-            indent_level = 0
-            tab_stop = TAB_SIZE
-            while peek == ' ' || peek == '\t'
-              if peek == ' '
-                indent_level += 1
-                tab_stop -= 1
-                if tab_stop == 0
-                  tab_stop = TAB_SIZE
-                end
-              else
-                indent_level += tab_stop
+      case c
+      when ' ', '\t'
+        if @newline
+          @newline = false
+          # https://docs.python.org/3/reference/lexical_analysis.html#indentation
+          indent_level = 0
+          tab_stop = TAB_SIZE
+          while peek == ' ' || peek == '\t'
+            if peek == ' '
+              indent_level += 1
+              tab_stop -= 1
+              if tab_stop == 0
                 tab_stop = TAB_SIZE
               end
-              advance
-            end
-            if peek == '\n'
-              @newline = true
-              advance
             else
-              # print "at border of ", peek.not_nil!, ", indent was ", indent_level, " and stack was ", @indent_stack, "\n"
-              if indent_level > @indent_stack.last
-                @indent_stack << indent_level
-                push_custom_token TokenType::Indent
-              elsif indent_level < @indent_stack.last
-                while @indent_stack.size > 1 && @indent_stack.last != indent_level
-                  push_custom_token TokenType::Unindent
-                  @indent_stack.pop
-                end
-                if indent_level != @indent_stack.last
-                  puts "indentation error: unexpected indentation"
-                end
+              indent_level += tab_stop
+              tab_stop = TAB_SIZE
+            end
+            advance
+          end
+          if peek == '\n'
+            @newline = true
+            @current_line += 1
+            advance
+          else
+            if indent_level > @indent_stack.last
+              @indent_stack << indent_level
+              push_custom_token TokenType::Indent
+            elsif indent_level < @indent_stack.last
+              while @indent_stack.size > 1 && @indent_stack.last != indent_level
+                push_custom_token TokenType::Unindent
+                @indent_stack.pop
+              end
+              if indent_level != @indent_stack.last
+                push_custom_token TokenType::Error, ERROR_MESSAGE_BAD_UNINDENT
               end
             end
-          else
-            advance
           end
-          @start_index = @current_index
-        when '\n'
-          @newline = true
+        else
+          advance
+        end
+        @start_index = @current_index
+      when '\n'
+        @newline = true
+        @current_line += 1
+        advance
+      else
+        if @newline
+          @newline = false
+          while @indent_stack.size > 1
+            push_custom_token TokenType::Unindent
+            @indent_stack.pop
+          end
+        end
+        case c
+        when '['
+          scan_expression
+        when '-'
+          advance
+          if match_and_advance('>')
+            advance_to_newline
+            token_string = get_token_string.lchop("->").lstrip
+            push_token TokenType::Goto, token_string
+          end
+        when '#'
+          advance_to_newline
+          token_string = get_token_string.lchop("#").lstrip
+          push_token TokenType::Anchor, token_string
+        when Char::ZERO
           advance
         else
-          if @newline
-            @newline = false
-            while @indent_stack.size > 1
-              push_custom_token TokenType::Unindent
-              @indent_stack.pop
-            end
-          end
-          case c
-          when '['
-            scan_expression
-          when '-'
-            advance
-            if match_and_advance('>')
-              advance_to_newline
-              token_string = get_token_string.lchop("->").lstrip
-              push_token TokenType::Goto, token_string
-            end
-          when '#'
-            advance_to_newline
-            token_string = get_token_string.lchop("#").lstrip
-            push_token TokenType::Anchor, token_string
-          else
-            advance_to_newline
-            push_token TokenType::TextLine
-          end
+          advance_to_newline
+          push_token TokenType::TextLine
         end
       end
     end
@@ -135,8 +187,10 @@ module Hollicode
         when ')'
           push_token TokenType::CloseParenthesis
           paren_depth -= 1
+        when '"', '\'' 
+          scan_string
         when '.'
-          if peek.try &.number?
+          if peek.number?
             scan_number
           else
             push_token TokenType::Dot
@@ -160,22 +214,22 @@ module Hollicode
             push_token TokenType::Or
           end
         else
-          if c.try &.number?
+          if c.number?
             scan_number
-          elsif c == '_' || c.try &.letter?
+          elsif c == '_' || c.letter?
             scan_word
           end
         end
         if bracket_depth == 0
           if paren_depth > 0
-            puts "warning: unterminated parenthetical"
+            push_custom_token TokenType::Error, ERROR_MESSAGE_UNTERMINATED_PARENTHESES
           end
           while peek == ' ' || peek == '\t'
             advance
           end
           @start_index = @current_index
-          if !peek.nil? && peek != '\n'
-            while !peek.nil? && peek != '\n'
+          if peek != Char::ZERO && peek != '\n'
+            while peek != Char::ZERO && peek != '\n'
               advance
             end
             push_token TokenType::ExpressionTag
@@ -200,6 +254,44 @@ module Hollicode
         end
       end
       push_token TokenType::NumberLiteral
+    end
+
+    # Scans token for a string literal.
+    private def scan_string
+      opening_quote = peek -1
+      escaped = false
+      starting_line = @current_line
+      str = String::Builder.new
+      while !(peek == opening_quote && !escaped)
+        if peek == '\\'
+          escaped = true
+        elsif peek == Char::ZERO
+          push_custom_token TokenType::Error, ERROR_MESSAGE_UNTERMINATED_STRING, starting_line
+          break
+        else
+          if escaped
+            escaped = false
+            case peek
+            when 'n'
+              str << "\n"
+            when 't'
+              str << "\t"
+            when 'r'
+              str << "\r"
+            else
+              str << peek
+            end
+          else
+            str << peek
+            if peek == "\n"
+              @current_line += 1
+            end
+          end
+        end
+        advance
+      end
+      advance
+      push_custom_token TokenType::StringLiteral, str.to_s, starting_line
     end
 
     # Scans token for a word.
@@ -239,6 +331,7 @@ module Hollicode
       return @current_index >= @source.size
     end
 
+    # Gets the string between `start_index` and `current_index`.
     private def get_token_string
       @source[@start_index...@current_index]
     end
@@ -250,8 +343,8 @@ module Hollicode
     end
 
     # Pushes an empty token of type `token_type` to the stack.
-    private def push_custom_token(token_type, lexeme = "")
-      @tokens << Token.new token_type, lexeme, @current_line
+    private def push_custom_token(token_type, lexeme = "", line = @current_line)
+      @tokens << Token.new token_type, lexeme, line
     end
 
     # Gets the current character and advances the index by one.
@@ -280,7 +373,11 @@ module Hollicode
   
     # Gets the current character without advancing the index.
     private def peek(how_far = 0)
-      return @source[@current_index + how_far]?
+      if @source[@current_index + how_far]?
+        @source[@current_index + how_far]
+      else
+        Char::ZERO
+      end
     end
   end
 end
