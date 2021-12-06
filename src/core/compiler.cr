@@ -148,6 +148,10 @@ module Hollicode
           compile_option_statement
         when TokenType::Wait
           compile_wait_statement
+        when TokenType::Word
+          compile_function_call_statement
+        else
+          report_error peek(-1).line, "unknown directive: expected function name but got #{peek(-1).type}"
         end
       else
         report_warning peek(-1).line, "unused token #{peek(-1).type.to_s}. Ignoring."
@@ -222,6 +226,32 @@ module Hollicode
       consume TokenType::Wait, "unknown control flow compilation error"
       consume TokenType::CloseExpression, "`wait` takes no arguments"
       @bytecode.push_wait
+    end
+
+    # Compiles a function call statement.
+    private def compile_function_call_statement
+      function_name_token = advance
+      arguments = [] of Expression
+      while !peek.type.close_expression?
+        if peek.type.open_expression?
+          report_error peek.line, "cannot nest directives"
+          return
+        elsif peek.type.eof?
+          report_error function_name_token.line, "function call directive never terminates"
+          return
+        else
+          arguments << parse_expression
+        end
+      end
+      consume TokenType::CloseExpression, "unknown control flow compilation error"
+      # pin any directive tag onto the end of the arguments list as a string
+      if match_any TokenType::DirectiveTag
+        arguments << Expression::Terminal.new(Token.new(TokenType::StringLiteral, peek(-1).lexeme, peek(-1).line))
+      end
+      arguments.reverse!
+      arguments.each { |a| emit_expression a }
+      @bytecode.push_variable function_name_token.lexeme
+      @bytecode.push_call arguments.size
     end
 
     # Compiles an expression.
