@@ -163,10 +163,13 @@ module Hollicode
             token_string = get_token_string.lchop("->").lstrip
             push_token TokenType::Goto, token_string
           end
-        when '#'
+        when '>'
           advance_to_newline
-          token_string = get_token_string.lchop("#").lstrip
+          token_string = get_token_string.lchop(">").lstrip
           push_token TokenType::Anchor, token_string
+        when '#'
+          # comment
+          advance_to_newline
         when Char::ZERO
           advance
         else
