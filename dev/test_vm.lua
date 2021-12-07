@@ -77,9 +77,9 @@ function exec(instruction)
 			incrementIP = false
 			ip = ip + tonumber(instruction:match("[^%s]+$"))
 		end
-	elseif op == "VAR" then
+	elseif op == "GETV" then
 		table.insert(stack, getVariable(instruction:match("[^%s]+$")))
-	elseif op == "FUNC" then
+	elseif op == "GETF" then
 		table.insert(stack, getVariable(instruction:match("[^%s]+$")))
 	elseif op == "CALL" then
 		local num = tonumber(instruction:match("[^%s]+$"))
