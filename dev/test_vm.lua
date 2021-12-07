@@ -13,17 +13,21 @@ else
 	os.exit(1)
 end
 
-local run, exec, getVariable
+local run, exec, getVariable, variables
 local instructions = {}
 local stack = {}
+local gotoStack = {}
+local options = {}
 local ip = 0
 local finished = false
 
-local variables = {
-	thing1 = "thing 1",
-	thing2 = "thing 2",
-	["do"] = function(args)
-		print("Doing: ", args[1], args[2])
+variables = {
+	variable = false,
+	alternate = true,
+	set = function(args)
+		for i = 1, #args do
+			variables[args[i] ] = true
+		end
 	end
 }
 
@@ -40,7 +44,6 @@ function run(code)
 	for instruction in string.gmatch(code, "([^\n]+)[\n]") do
 		table.insert(instructions, instruction)
 	end
-
 	ip = 1
 	while instructions[ip] and not finished do
 		exec(instructions[ip])
@@ -50,9 +53,7 @@ end
 function exec(instruction)
 	local op = instruction:match("[^%s]+")
 	local incrementIP = true
-
 	if op == "POP" then
-		-- print("POP: ", stack[#stack])
 		table.remove(stack)
 	elseif op == "BOOL" then
 		local boolString = instruction:match("[^%s]+$")
@@ -60,15 +61,13 @@ function exec(instruction)
 		if boolString == "false" then
 			value = false
 		end
-		-- print("BOOL: ", value)
 		table.insert(stack, value)
 	elseif op == "STR" then
 		local str = instruction:match(op .. "\t(.-)$")
-		-- print("STR: ", str)
 		table.insert(stack, str)
-	elseif op == "SAY" then
+	elseif op == "ECHO" then
 		local str = table.remove(stack)
-		print("SAY: ", str)
+		print(str)
 	elseif op == "JMP" then
 		incrementIP = false
 		ip = ip + tonumber(instruction:match("[^%s]+$"))
@@ -88,8 +87,35 @@ function exec(instruction)
 			table.insert(funcArgs, 1, table.remove(stack))
 		end
 		func(funcArgs)
+	elseif op == "GOTO" then
+		local where = tonumber(instruction:match("[^%s]+$"))
+		table.insert(gotoStack, ip)
+		ip = where + 1 -- account for Lua's 1-indexed tables
+		incrementIP = false
+	elseif op == "RET" then
+		if #gotoStack > 0 then
+			ip = table.remove(gotoStack)
+		end
+	elseif op == "OPT" then
+		local optionName = table.remove(stack)
+		local optionGoto = tonumber(instruction:match("[^%s]+$"))
+		table.insert(options, {optionName, optionGoto})
+	elseif op == "WAIT" then
+		for i = 1, #options do
+			print("Option #" .. i .. ": " .. options[i][1])
+		end
+		io.write("Enter an option: ")
+		local selectedOption = io.read("*n")
+		while not selectedOption or (selectedOption < 0 or selectedOption > #options) do
+			print("Invalid option.")
+			io.write("Try again: ")
+			selectedOption = tonumber(io.read("*n"))
+		end
+		local o = options[selectedOption]
+		table.insert(gotoStack, ip)
+		ip = o[2] + 1
+		incrementIP = false
 	end
-
 	if incrementIP then
 		ip = ip + 1
 		if ip > #instructions then
