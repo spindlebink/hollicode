@@ -170,6 +170,11 @@ module Hollicode
         when '#'
           # comment
           advance_to_newline
+        when "*"
+          # explicit text line
+          advance_to_newline
+          token_string = get_token_string.lchop("*").lstrip
+          push_token TokenType::TextLine, token_string
         when Char::ZERO
           advance
         else
