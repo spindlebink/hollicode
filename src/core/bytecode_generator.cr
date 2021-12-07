@@ -14,6 +14,10 @@ module Hollicode
       def {{method_name}}
         @operations << {{operation_name}}.new
       end
+
+      def {{method_name}}_header
+        @header_operations << {{operation_name}}.new
+      end
     end
 
     macro define_single_arg_op(op_code, method_name, operation_name, arg_type)
@@ -29,33 +33,41 @@ module Hollicode
         @operations << op
         op
       end
+
+      def {{method_name}}_header(value : {{arg_type}})
+        op = {{operation_name}}.new value
+        @header_operations << op
+        op
+      end
     end
 
-    define_no_args_op    0x00,    push_return,        ReturnOp
-    define_no_args_op    0x01,    push_pop,           PopOp
-    define_single_arg_op 0x02,    push_jump,          JumpOp,            Int32
-    define_single_arg_op 0x03,    push_jump_if_false, JumpIfFalseOp,     Int32
-    define_no_args_op    0x10,    push_nil,           NilOp
-    define_single_arg_op 0x11,    push_boolean,       BooleanConstantOp, Bool
-    define_single_arg_op 0x12,    push_number,        NumberConstantOp,  Float64
-    define_single_arg_op 0x13,    push_string,        StringConstantOp,  String
-    define_single_arg_op 0x14,    push_variable,      VariableOp,        String
-    define_no_args_op    0x20,    push_not,           NotOp
-    define_no_args_op    0x21,    push_negate,        NegateOp
-    define_single_arg_op 0x22,    push_call,          CallOp,            Int32
-    define_no_args_op    0x23,    push_add,           AddOp
-    define_no_args_op    0x24,    push_subtract,      SubtractOp
-    define_no_args_op    0x25,    push_multiply,      MultiplyOp
-    define_no_args_op    0x26,    push_divide,        DivideOp
-    define_no_args_op    0x30,    push_echo,          EchoOp
-    define_single_arg_op 0x31,    push_option,        OptionOp,          Int32
-    define_no_args_op    0x32,    push_wait,          WaitOp
+    define_no_args_op    0x00,  push_return,        ReturnOp
+    define_no_args_op    0x01,  push_pop,           PopOp
+    define_single_arg_op 0x02,  push_jump,          JumpOp,            Int32
+    define_single_arg_op 0x03,  push_jump_if_false, JumpIfFalseOp,     Int32
+    define_single_arg_op 0x04,  push_goto,          GotoOp,            Int32
+    define_no_args_op    0x10,  push_nil,           NilOp
+    define_single_arg_op 0x11,  push_boolean,       BooleanConstantOp, Bool
+    define_single_arg_op 0x12,  push_number,        NumberConstantOp,  Float64
+    define_single_arg_op 0x13,  push_string,        StringConstantOp,  String
+    define_single_arg_op 0x14,  push_variable,      VariableOp,        String
+    define_no_args_op    0x20,  push_not,           NotOp
+    define_no_args_op    0x21,  push_negate,        NegateOp
+    define_single_arg_op 0x22,  push_call,          CallOp,            Int32
+    define_no_args_op    0x23,  push_add,           AddOp
+    define_no_args_op    0x24,  push_subtract,      SubtractOp
+    define_no_args_op    0x25,  push_multiply,      MultiplyOp
+    define_no_args_op    0x26,  push_divide,        DivideOp
+    define_no_args_op    0x30,  push_echo,          EchoOp
+    define_single_arg_op 0x31,  push_option,        OptionOp,          Int32
+    define_no_args_op    0x32,  push_wait,          WaitOp
 
     @op_names = {
       0x00 => "RET",
       0x01 => "POP",
       0x02 => "JMP",
       0x03 => "FJMP",
+      0x04 => "GOTO",
       0x10 => "NIL",
       0x11 => "BOOL",
       0x12 => "NUM",
@@ -73,6 +85,7 @@ module Hollicode
       0x32 => "WAIT"
     }
 
+    @header_operations = [] of Operation
     @operations = [] of Operation
 
     def num_ops
