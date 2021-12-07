@@ -249,6 +249,15 @@ module Hollicode
 
       function_name_token = advance
       arguments = [] of Expression
+
+      if match_any TokenType::Colon
+        consume TokenType::Word, "target of colon string capture must be an identifier"
+        arguments << Expression::Terminal.new Token.new TokenType::StringLiteral, peek(-1).lexeme, peek(-1).line
+        # @bytecode.push_string peek(-1).lexeme
+        if !peek.type.close_expression?
+          consume TokenType::Comma, "arguments to directive must be separated by commas"
+        end
+      end
       while !peek.type.close_expression?
         if peek.type.open_expression?
           report_error peek.line, "cannot nest directives"
@@ -258,6 +267,9 @@ module Hollicode
           return
         else
           arguments << parse_expression
+          if !peek.type.close_expression?
+            consume TokenType::Comma, "arguments to directive must be separated by commas"
+          end
         end
       end
       consume TokenType::CloseExpression, "unknown control flow compilation error"

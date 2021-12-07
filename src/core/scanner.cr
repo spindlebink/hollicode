@@ -19,6 +19,7 @@ module Hollicode
     Word
     Dot
     Comma
+    Colon
     NumberLiteral
     StringLiteral
     BooleanLiteral
@@ -205,6 +206,8 @@ module Hollicode
           paren_depth -= 1
         when '"', '\'' 
           scan_string
+        when ':'
+          push_token TokenType::Colon
         when '.'
           if peek.number?
             scan_number
