@@ -170,7 +170,7 @@ module Hollicode
         when '#'
           # comment
           advance_to_newline
-        when "*"
+        when '*'
           # explicit text line
           advance_to_newline
           token_string = get_token_string.lchop("*").lstrip

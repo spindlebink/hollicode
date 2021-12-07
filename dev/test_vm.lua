@@ -79,6 +79,8 @@ function exec(instruction)
 		end
 	elseif op == "VAR" then
 		table.insert(stack, getVariable(instruction:match("[^%s]+$")))
+	elseif op == "FUNC" then
+		table.insert(stack, getVariable(instruction:match("[^%s]+$")))
 	elseif op == "CALL" then
 		local num = tonumber(instruction:match("[^%s]+$"))
 		local func = table.remove(stack)

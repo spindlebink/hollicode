@@ -267,7 +267,7 @@ module Hollicode
       end
       arguments.reverse!
       arguments.each { |a| emit_expression a }
-      @bytecode.push_variable function_name_token.lexeme
+      @bytecode.push_function function_name_token.lexeme
       @bytecode.push_call arguments.size
     end
 

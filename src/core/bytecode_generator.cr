@@ -51,6 +51,7 @@ module Hollicode
     define_single_arg_op 0x12,  push_number,        NumberConstantOp,  Float64
     define_single_arg_op 0x13,  push_string,        StringConstantOp,  String
     define_single_arg_op 0x14,  push_variable,      VariableOp,        String
+    define_single_arg_op 0x15,  push_function,      FunctionOp,        String
     define_no_args_op    0x20,  push_not,           NotOp
     define_no_args_op    0x21,  push_negate,        NegateOp
     define_single_arg_op 0x22,  push_call,          CallOp,            Int32
@@ -73,6 +74,7 @@ module Hollicode
       0x12 => "NUM",
       0x13 => "STR",
       0x14 => "VAR",
+      0x15 => "FUNC",
       0x20 => "NOT",
       0x21 => "NEG",
       0x22 => "CALL",
