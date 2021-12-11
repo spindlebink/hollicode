@@ -13,7 +13,7 @@ else
 	os.exit(1)
 end
 
-local run, exec, getVariable, variables
+local run, exec, getVariable, variables, simpleOperators
 local instructions = {}
 local stack = {}
 local gotoStack = {}
@@ -24,10 +24,74 @@ local finished = false
 variables = {
 	variable = false,
 	alternate = true,
+	a = 4,
 	set = function(args)
 		for i = 1, #args do
 			variables[args[i] ] = true
 		end
+	end
+}
+
+simpleOperators = {
+	ADD = function()
+		local l = table.remove(stack)
+		local r = table.remove(stack)
+		table.insert(stack, l + r)
+	end,
+	SUB = function()
+		local l = table.remove(stack)
+		local r = table.remove(stack)
+		table.insert(stack, l - r)
+	end,
+	DIV = function()
+		local l = table.remove(stack)
+		local r = table.remove(stack)
+		table.insert(stack, l / r)
+	end,
+	MULT = function()
+		local l = table.remove(stack)
+		local r = table.remove(stack)
+		table.insert(stack, l * r)
+	end,
+	NEQ = function()
+		local l = table.remove(stack)
+		local r = table.remove(stack)
+		table.insert(stack, l ~= r)
+	end,
+	EQ = function()
+		local l = table.remove(stack)
+		local r = table.remove(stack)
+		table.insert(stack, l == r)
+	end,
+	LEQ = function()
+		local l = table.remove(stack)
+		local r = table.remove(stack)
+		table.insert(stack, l <= r)
+	end,
+	GEQ = function()
+		local l = table.remove(stack)
+		local r = table.remove(stack)
+		table.insert(stack, l >= r)
+	end,
+	LESS = function()
+		local l = table.remove(stack)
+		local r = table.remove(stack)
+		table.insert(stack, l < r)
+	end,
+	MORE = function()
+		local l = table.remove(stack)
+		local r = table.remove(stack)
+		table.insert(stack, l > r)
+	end,
+	OR = function()
+		local l = table.remove(stack)
+		local r = table.remove(stack)
+		table.insert(stack, l or r)
+	end,
+	AND = function()
+		local l = table.remove(stack)
+		local r = table.remove(stack)
+		table.insert(stack, l and r)
 	end
 }
 
@@ -65,6 +129,8 @@ function exec(instruction)
 	elseif op == "STR" then
 		local str = instruction:match(op .. "\t(.-)$")
 		table.insert(stack, str)
+	elseif op == "NUM" then
+		table.insert(stack, tonumber(instruction:match(op .. "\t(.-)$")))
 	elseif op == "ECHO" then
 		local str = table.remove(stack)
 		print(str)
@@ -117,6 +183,8 @@ function exec(instruction)
 		table.insert(gotoStack, ip)
 		ip = o[2] + 1
 		incrementIP = false
+	elseif simpleOperators[op] then
+		simpleOperators[op]()
 	end
 	if incrementIP then
 		ip = ip + 1
