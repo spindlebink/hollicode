@@ -113,6 +113,14 @@ module Hollicode
       end
     end
 
+    def get_json
+      if @compilation_okay
+        @bytecode.get_json
+      else
+        ""
+      end
+    end
+
     # Compiles statements until the end of the source string is reached.
     private def compile_indented_block
       if match_any TokenType::Indent
@@ -222,7 +230,7 @@ module Hollicode
       @compile_history << StatementType::Option
       
       consume TokenType::Option, "unknown control flow compilation error"
-      consume TokenType::CloseExpression, "`option` takes no arguments. Did you mean to use a directive tag? `[option] Option tag`"
+      consume TokenType::CloseExpression, "`option` takes no arguments. Did you mean to use a directive tag? `[option] Directive tag`"
       option_tag = ""
       if match_any TokenType::DirectiveTag
         option_tag = peek(-1).lexeme

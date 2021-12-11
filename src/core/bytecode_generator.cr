@@ -2,8 +2,13 @@
 # bytecode_generator.cr
 #
 
+require "json"
+require "./core"
+
 module Hollicode
   class BytecodeGenerator
+    BYTECODE_FORMAT_VERSION = "0.1.0"
+
     abstract class Operation; end
 
     macro define_no_args_op(op_code, method_name, operation_name)
@@ -112,12 +117,50 @@ module Hollicode
 
     def get_plain_text
       String.build do |str|
+        str << JSON.build do |json|
+          json.object do
+            json.field "version", LANGUAGE_VERSION
+            json.field "bytecodeVersion", BYTECODE_FORMAT_VERSION
+          end
+        end
+        str << "\n"
         @operations.each do |operation|
           str << @op_names[operation.op_code]
           if operation.responds_to? :value
             str << "\t" << operation.value
           end
           str << "\n"
+        end
+      end
+    end
+
+    def get_json
+      String.build do |str|
+        str << JSON.build do |json|
+          json.object do
+            json.field "header" do
+              json.object do
+                json.field "version", LANGUAGE_VERSION
+                json.field "bytecodeVersion", BYTECODE_FORMAT_VERSION
+              end
+            end
+            json.field "instructions" do
+              json.array do
+                @operations.each do |operation|
+                  if operation.responds_to? :value
+                    json.array do
+                      json.string @op_names[operation.op_code]
+                      if operation.responds_to? :value
+                        operation.value.to_json json
+                      end
+                    end
+                  else
+                    json.string @op_names[operation.op_code]
+                  end
+                end
+              end
+            end
+          end
         end
       end
     end

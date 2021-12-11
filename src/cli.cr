@@ -1,8 +1,9 @@
 require "option_parser"
-require "./core/compiler"
+require "./core"
 
 input_file = ""
 output_file = ""
+target_format = ""
 arguments = ARGV.dup
 
 OptionParser.parse(arguments) do |parser|
@@ -13,29 +14,44 @@ OptionParser.parse(arguments) do |parser|
   parser.on "-o OUTPUT", "--out=OUTPUT", "The output file." do |o|
     output_file = o
   end
+  parser.on "-t TARGET", "--target=TARGET", "The target format. Can be either `json` or `text`. Leave blank to guess based on file extension (`.hlj` or `.hlt`)." do |t|
+    target_format = t
+  end
   parser.on "-h", "--help", "Show this help" do |h|
     puts parser
     exit
   end
-end
 
-if input_file.empty?
-  if arguments.size > 0
-    input_file = arguments[0]
-    arguments.shift
+  if input_file.empty?
+    if arguments.size > 0
+      input_file = arguments[0]
+      arguments.shift
+    end
   end
-end
-
-if output_file.empty?
-  if arguments.size > 0
-    output_file = arguments[0]
-    arguments.shift
+  
+  if output_file.empty?
+    if arguments.size > 0
+      output_file = arguments[0]
+      arguments.shift
+    end
   end
-end
+  
+  if input_file.empty? || output_file.empty?
+    puts parser
+    exit
+  end
 
-if input_file.empty? || output_file.empty?
-  STDERR << "Insufficient input provided.\n"
-  exit 1
+  if target_format.empty?
+    target_format = output_file.ends_with?(".hlj") ? "json" : output_file.ends_with?(".hlt") ? "text" : ""
+    if target_format.empty?
+      puts "Could not determine output target from file extension. Specify it using `-t TARGET` or `--target=TARGET`."
+      exit 1
+    end
+  else
+    if target_format != "json" || target_format != "text"
+      puts "Invalid target format '#{target_format}'. Valid options are:\n* json\n*text"
+    end
+  end
 end
 
 begin
@@ -47,7 +63,11 @@ begin
       exit 1
     else
       File.open(output_file, "w") do |out_file|
-        out_file << compiler.get_plain_text
+        if target_format == "json"
+          out_file << compiler.get_json
+        elsif target_format == "text"
+          out_file << compiler.get_plain_text
+        end
       end
     end
   end
