@@ -140,6 +140,7 @@ module Hollicode
         else
           @goto_commands[anchor_name] = [@bytecode.push_goto 0]
         end
+        compile_indented_block
       when TokenType::OpenExpression
         case peek.type
         when TokenType::CloseExpression
@@ -166,6 +167,7 @@ module Hollicode
       @compile_history << StatementType::TextLine
       @bytecode.push_string peek(-1).lexeme
       @bytecode.push_echo
+      compile_indented_block
     end
 
     # Compiles an if statement (and any associated `else` statement).
@@ -226,7 +228,7 @@ module Hollicode
         option_tag = peek(-1).lexeme
       end
       @bytecode.push_string option_tag
-      @bytecode.push_option @bytecode.num_ops + 2
+      @bytecode.push_option
       block_start = @bytecode.num_ops
       option_jump = @bytecode.push_jump 0
       compile_indented_block
@@ -237,10 +239,19 @@ module Hollicode
     # Compiles a `wait` statement.
     private def compile_wait_statement
       @compile_history << StatementType::Wait
-
       consume TokenType::Wait, "unknown control flow compilation error"
       consume TokenType::CloseExpression, "`wait` takes no arguments"
       @bytecode.push_wait
+      compile_indented_block
+    end
+
+    # Compiles a `return` statement.
+    private def compile_return_statement
+      @compile_history << StatementType::Return
+      consume TokenType::Return, "unknown control flow compilation error"
+      consume TokenType::CloseExpression, "`return` takes no arguments"
+      @bytecode.push_return
+      compile_indented_block
     end
 
     # Compiles a function call statement.
@@ -275,12 +286,13 @@ module Hollicode
       consume TokenType::CloseExpression, "unknown control flow compilation error"
       # pin any directive tag onto the end of the arguments list as a string
       if match_any TokenType::DirectiveTag
-        arguments << Expression::Terminal.new(Token.new(TokenType::StringLiteral, peek(-1).lexeme, peek(-1).line))
+        arguments.unshift Expression::Terminal.new(Token.new(TokenType::StringLiteral, peek(-1).lexeme, peek(-1).line))
       end
       arguments.reverse!
       arguments.each { |a| emit_expression a }
       @bytecode.push_function function_name_token.lexeme
       @bytecode.push_call arguments.size
+      compile_indented_block
     end
 
     # Compiles an expression.
@@ -293,8 +305,55 @@ module Hollicode
       case expr
       when Expression::Terminal
         emit_terminal expr
-      else
-        puts "expression compilation incomplete"
+      when Expression::Binary
+        emit_expression expr.right
+        emit_expression expr.left
+        emit_binary_operator expr.operator
+      when Expression::Unary
+        emit_expression expr.right
+        emit_unary_operator expr.operator
+      when Expression::Grouping
+        emit_expression expr.expression
+      end
+    end
+
+    # Emits associated op code for a binary operator.
+    private def emit_binary_operator(token)
+      case token.type
+      when TokenType::GreaterThan
+        @bytecode.push_greater
+      when TokenType::LessThan
+        @bytecode.push_lesser
+      when TokenType::GreaterThanOrEqual
+        @bytecode.push_greater_equal
+      when TokenType::LessThanOrEqual
+        @bytecode.push_lesser_equal
+      when TokenType::EqualEqual
+        @bytecode.push_equality
+      when TokenType::NotEqual
+        @bytecode.push_inequality
+      when TokenType::Minus
+        @bytecode.push_subtract
+      when TokenType::Plus
+        @bytecode.push_add
+      when TokenType::Divide
+        @bytecode.push_divide
+      when TokenType::Multiply
+        @bytecode.push_multiply
+      when TokenType::And
+        @bytecode.push_and
+      when TokenType::Or
+        @bytecode.push_or
+      end
+    end
+
+    # Emits associated op code for a unary operator.
+    private def emit_unary_operator(token)
+      case token.type
+      when TokenType::Minus
+        @bytecode.push_negate
+      when TokenType::Not
+        @bytecode.push_not
       end
     end
 
@@ -330,10 +389,21 @@ module Hollicode
       parse_equality
     end
 
-    # equality -> comparison ( ( != | == ) comparison )*
+    # equality -> andor ( ( != | == ) andor )*
     private def parse_equality
-      expr = parse_comparison
+      expr = parse_andor
       while match_any TokenType::NotEqual, TokenType::EqualEqual
+        operator = peek(-1).not_nil!
+        right = parse_andor
+        expr = Expression::Binary.new expr, operator, right
+      end
+      expr
+    end
+
+    # andor -> comparison ( ( and | or ) comparison )*
+    private def parse_andor
+      expr = parse_comparison
+      while match_any TokenType::And, TokenType::Or
         operator = peek(-1).not_nil!
         right = parse_comparison
         expr = Expression::Binary.new expr, operator, right

@@ -59,9 +59,17 @@ module Hollicode
     define_no_args_op    0x24,  push_subtract,      SubtractOp
     define_no_args_op    0x25,  push_multiply,      MultiplyOp
     define_no_args_op    0x26,  push_divide,        DivideOp
-    define_no_args_op    0x30,  push_echo,          EchoOp
-    define_single_arg_op 0x31,  push_option,        OptionOp,          Int32
-    define_no_args_op    0x32,  push_wait,          WaitOp
+    define_no_args_op    0x27,  push_or,            OrOp
+    define_no_args_op    0x28,  push_and,           AndOp
+    define_no_args_op    0x29,  push_inequality,    NotEqualOp
+    define_no_args_op    0x2a,  push_equality,      EqualityOp
+    define_no_args_op    0x2b,  push_lesser_equal,  LessThanOrEqualOp
+    define_no_args_op    0x2c,  push_greater_equal, GreaterThanOrEqualOp
+    define_no_args_op    0x2d,  push_lesser,        LessThanOp
+    define_no_args_op    0x2e,  push_greater,       GreaterThanOp
+    define_no_args_op    0x40,  push_echo,          EchoOp
+    define_no_args_op    0x41,  push_option,        OptionOp
+    define_no_args_op    0x42,  push_wait,          WaitOp
 
     @op_names = {
       0x00 => "RET",
@@ -82,9 +90,17 @@ module Hollicode
       0x24 => "SUB",
       0x25 => "MULT",
       0x26 => "DIV",
-      0x30 => "ECHO",
-      0x31 => "OPT",
-      0x32 => "WAIT"
+      0x27 => "OR",
+      0x28 => "AND",
+      0x29 => "NEQ",
+      0x2a => "EQ",
+      0x2b => "LEQ",
+      0x2c => "GEQ",
+      0x2d => "LESS",
+      0x2e => "MORE",
+      0x40 => "ECHO",
+      0x41 => "OPT",
+      0x42 => "WAIT"
     }
 
     @header_operations = [] of Operation

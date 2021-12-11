@@ -91,9 +91,9 @@ module Hollicode
       end
       push_custom_token TokenType::EOF
 
-      # @tokens.each do |token|
-      #   puts token.type
-      # end
+      @tokens.each do |token|
+        # puts token.type
+      end
     end
 
     # Scans the next token in the source string.
@@ -187,12 +187,16 @@ module Hollicode
 
     # Scans tokens for an expression.
     private def scan_expression
+      puts "Scanning expression"
       bracket_depth = 0
       paren_depth = 0
       while !finished?
         @start_index = @current_index
-        case c = advance
+        c = advance
+        puts c
+        case c
         when '['
+          puts "OPEN EXPRESSION"
           push_token TokenType::OpenExpression
           bracket_depth += 1
         when ']'
@@ -236,6 +240,7 @@ module Hollicode
           if c.number?
             scan_number
           elsif c == '_' || c.letter?
+            advance -1
             scan_word
           end
         end
@@ -369,9 +374,12 @@ module Hollicode
     end
 
     # Gets the current character and advances the index by one.
-    private def advance
+    private def advance(n = 1)
       c = peek
-      @current_index += 1
+      @current_index += n
+      if @current_index < 0
+        @current_index = 0
+      end
       return c
     end
 
