@@ -59,6 +59,7 @@ module Hollicode
     ERROR_MESSAGE_UNTERMINATED_PARENTHESES = "mismatched parentheses"
     ERROR_MESSAGE_UNTERMINATED_STRING = "unterminated string"
     ERROR_MESSAGE_MIXED_INDENTATION = "mixed tabs and spaces"
+    ERROR_MESSAGE_UNEXPECTED_CHARACTER = "unexpected character"
 
     @source = ""
     @indent_stack = [] of Int32
@@ -92,7 +93,7 @@ module Hollicode
       push_custom_token TokenType::EOF
 
       @tokens.each do |token|
-        # puts token.type
+        puts token.type
       end
     end
 
@@ -228,9 +229,15 @@ module Hollicode
           push_token match_and_advance('=') ? TokenType::EqualEqual : TokenType::Equal
         when '!'
           push_token match_and_advance('=') ? TokenType::NotEqual : TokenType::Not
+        when '+'
+          push_token TokenType::Plus
+        when '-'
+          push_token TokenType::Minus
         when '&'
           if match_and_advance('&')
             push_token TokenType::And
+          else
+            push_custom_token TokenType::Error, ERROR_MESSAGE_UNEXPECTED_CHARACTER
           end
         when '|'
           if match_and_advance('|')

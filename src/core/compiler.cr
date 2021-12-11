@@ -400,7 +400,7 @@ module Hollicode
       expr
     end
 
-    # andor -> comparison ( ( and | or ) comparison )*
+    # andor -> comparison ( ( AND | OR ) comparison )*
     private def parse_andor
       expr = parse_comparison
       while match_any TokenType::And, TokenType::Or
