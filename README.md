@@ -15,7 +15,7 @@ The name, meanwhile, derives from a work-in-progress text-heavy RPG called *Holl
 ## Example
 
 ```
-# Conversation beginning
+> Conversation beginning
 	[speaker shopkeeper]
 	[if new]
 		Hello there!
@@ -35,7 +35,7 @@ The name, meanwhile, derives from a work-in-progress text-heavy RPG called *Holl
 	
 	[wait]
 
-# Buy fruit
+> Buy fruit
 	[option] Give me one of those apples!
 		-> Bought item
 	[option] I'll take a pear, please.
@@ -45,7 +45,7 @@ The name, meanwhile, derives from a work-in-progress text-heavy RPG called *Holl
 	
 	[wait]
 
-# Bought item
+> Bought item
 	Thank you very much!
 	-> Conversation beginning
 ```
