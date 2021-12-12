@@ -18,6 +18,7 @@ module Hollicode
     Include
     Option
     Wait
+    Return
     FunctionCall
   end
 
@@ -74,7 +75,7 @@ module Hollicode
     @index = 0
     @compilation_okay = true
 
-    @goto_commands = {} of String => Array(BytecodeGenerator::JumpOp)
+    @goto_commands = {} of String => Array(BytecodeGenerator::TracedJumpOp)
     @anchor_points = {} of String => Int32
     @compile_history = [] of StatementType
 
@@ -160,9 +161,9 @@ module Hollicode
         @compile_history << StatementType::Goto
         anchor_name = get_anchor_name peek(-1).lexeme
         if @goto_commands.has_key? anchor_name
-          @goto_commands[anchor_name] << @bytecode.push_jump @bytecode.num_ops
+          @goto_commands[anchor_name] << @bytecode.push_traced_jump @bytecode.num_ops
         else
-          @goto_commands[anchor_name] = [@bytecode.push_jump @bytecode.num_ops]
+          @goto_commands[anchor_name] = [@bytecode.push_traced_jump @bytecode.num_ops]
         end
         compile_indented_block
       when TokenType::OpenExpression
@@ -178,10 +179,12 @@ module Hollicode
           compile_option_statement
         when TokenType::Wait
           compile_wait_statement
+        when TokenType::Return
+          compile_return_statement
         when TokenType::Word
           compile_function_call_statement
         else
-          report_error peek(-1).line, "unknown directive: expected function name but got #{peek(-1).type}"
+          report_error peek(-1).line, "unknown directive: expected function name but got #{peek.type}"
         end
       else
         report_warning peek(-1).line, "unused token #{peek(-1).type.to_s}. Ignoring."

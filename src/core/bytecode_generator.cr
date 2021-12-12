@@ -50,16 +50,17 @@ module Hollicode
     define_no_args_op    0x01,  push_pop,           PopOp
     define_single_arg_op 0x02,  push_jump,          JumpOp,            Int32
     define_single_arg_op 0x03,  push_jump_if_false, JumpIfFalseOp,     Int32
+    define_single_arg_op 0x04,  push_traced_jump,   TracedJumpOp,      Int32
     define_no_args_op    0x10,  push_nil,           NilOp
     define_single_arg_op 0x11,  push_boolean,       BooleanConstantOp, Bool
     define_single_arg_op 0x12,  push_number,        NumberConstantOp,  Float64
     define_single_arg_op 0x13,  push_string,        StringConstantOp,  String
     define_single_arg_op 0x14,  push_variable,      VariableOp,        String
     define_single_arg_op 0x15,  push_function,      FunctionOp,        String
-    define_no_args_op    0x20,  push_not,           NotOp
-    define_no_args_op    0x21,  push_negate,        NegateOp
-    define_single_arg_op 0x22,  push_binary_op,     BinaryOP,          String
-    define_single_arg_op 0x23,  push_call,          CallOp,            Int32
+    define_single_arg_op 0x20,  push_call,          CallOp,            Int32
+    define_no_args_op    0x21,  push_not,           NotOp
+    define_no_args_op    0x22,  push_negate,        NegateOp
+    define_single_arg_op 0x23,  push_binary_op,     BinaryOP,          String
     define_no_args_op    0x40,  push_echo,          EchoOp
     define_single_arg_op 0x41,  push_option,        OptionOp,          Int32
     define_no_args_op    0x42,  push_wait,          WaitOp
@@ -69,16 +70,17 @@ module Hollicode
       0x01 => "POP",
       0x02 => "JMP",
       0x03 => "FJMP",
+      0x04 => "TJMP",
       0x10 => "NIL",
       0x11 => "BOOL",
       0x12 => "NUM",
       0x13 => "STR",
       0x14 => "GETV",
       0x15 => "GETF",
-      0x20 => "NOT",
-      0x21 => "NEG",
-      0x22 => "BOP",
-      0x23 => "CALL",
+      0x20 => "CALL",
+      0x21 => "NOT",
+      0x22 => "NEG",
+      0x23 => "BOP",
       0x40 => "ECHO",
       0x41 => "OPT",
       0x42 => "WAIT"

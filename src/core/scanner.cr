@@ -29,6 +29,7 @@ module Hollicode
     Include
     Option
     Wait
+    Return
     GreaterThan
     LessThan
     GreaterThanOrEqual
@@ -230,6 +231,10 @@ module Hollicode
           push_token TokenType::Plus
         when '-'
           push_token TokenType::Minus
+        when '*'
+          push_token TokenType::Multiply
+        when '/'
+          push_token TokenType::Divide
         when '&'
           if match_and_advance('&')
             push_token TokenType::And
@@ -351,6 +356,8 @@ module Hollicode
         push_token TokenType::Wait
       elsif word == "option"
         push_token TokenType::Option
+      elsif word == "return"
+        push_token TokenType::Return
       else
         # On the other hand, we handle differentiation between function calls
         # and if/elseif/else statements in the parser
