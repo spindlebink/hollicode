@@ -265,7 +265,7 @@ module Hollicode
           include_compiler.compilation_path = file_path.dirname
           success = include_compiler.compile file.gets_to_end
           if !success
-            report_error include_line, "Compilation of included file '#{file_path}' failed. Exiting."
+            report_error include_line, "compilation of included file '#{file_path}' failed. Exiting."
           end
         end
       rescue error
@@ -277,13 +277,9 @@ module Hollicode
     private def compile_option_statement
       @compile_history << StatementType::Option
       consume TokenType::Option, "unknown control flow compilation error"
-      consume TokenType::CloseExpression, "`option` takes no arguments. Did you mean to use a directive tag? `[option] Directive tag`"
-      option_tag = ""
-      if match_any TokenType::DirectiveTag
-        option_tag = peek(-1).lexeme
-      end
-      @bytecode.push_string option_tag
-      @bytecode.push_option
+      arguments = parse_directive_arguments
+      arguments.each { |a| emit_expression a }
+      @bytecode.push_option arguments.size
       block_start = @bytecode.num_ops
       option_jump = @bytecode.push_jump 0
       compile_indented_block
@@ -312,38 +308,8 @@ module Hollicode
     # Compiles a function call statement.
     private def compile_function_call_statement
       @compile_history << StatementType::FunctionCall
-
       function_name_token = advance
-      arguments = [] of Expression
-
-      if match_any TokenType::Colon
-        consume TokenType::Word, "target of colon string capture must be an identifier"
-        arguments << Expression::Terminal.new Token.new TokenType::StringLiteral, peek(-1).lexeme, peek(-1).line
-        # @bytecode.push_string peek(-1).lexeme
-        if !peek.type.close_expression?
-          consume TokenType::Comma, "arguments to directive must be separated by commas"
-        end
-      end
-      while !peek.type.close_expression?
-        if peek.type.open_expression?
-          report_error peek.line, "cannot nest directives"
-          return
-        elsif peek.type.eof?
-          report_error function_name_token.line, "function call directive never terminates"
-          return
-        else
-          arguments << parse_expression
-          if !peek.type.close_expression?
-            consume TokenType::Comma, "arguments to directive must be separated by commas"
-          end
-        end
-      end
-      consume TokenType::CloseExpression, "unknown control flow compilation error"
-      # pin any directive tag onto the end of the arguments list as a string
-      if match_any TokenType::DirectiveTag
-        arguments.unshift Expression::Terminal.new(Token.new(TokenType::StringLiteral, peek(-1).lexeme, peek(-1).line))
-      end
-      arguments.reverse!
+      arguments = parse_directive_arguments
       arguments.each { |a| emit_expression a }
       @bytecode.push_function function_name_token.lexeme
       @bytecode.push_call arguments.size
@@ -422,6 +388,39 @@ module Hollicode
     # sort of morph into expression parsing mode until we find the associated
     # closing bracket.
     #
+
+    private def parse_directive_arguments
+      starting_line = peek(-1).line
+      arguments = [] of Expression
+      if match_any TokenType::Colon
+        consume TokenType::Word, "target of colon string capture must be an identifier"
+        arguments << Expression::Terminal.new Token.new TokenType::StringLiteral, peek(-1).lexeme, peek(-1).line
+        if !peek.type.close_expression?
+          consume TokenType::Comma, "arguments must be separated by commas"
+        end
+      end
+      while !peek.type.close_expression?
+        if peek.type.open_expression?
+          report_error peek.line, "invalid argument type: directive"
+          return [] of Expression
+        elsif peek.type.eof?
+          report_error starting_line, "directive never terminates"
+          return [] of Expression
+        else
+          arguments << parse_expression
+          if !peek.type.close_expression?
+            consume TokenType::Comma, "arguments must be separated by commas"
+          end
+        end
+      end
+      consume TokenType::CloseExpression, "unknown control flow compilation error"
+      # pin any directive tag onto the end of the arguments list as a string
+      if match_any TokenType::DirectiveTag
+        arguments.unshift Expression::Terminal.new(Token.new(TokenType::StringLiteral, peek(-1).lexeme, peek(-1).line))
+      end
+      arguments.reverse!
+      arguments
+    end
 
     private def parse_expression
       parse_and_or

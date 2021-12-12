@@ -61,7 +61,7 @@ module Hollicode
     define_single_arg_op 0x22,  push_binary_op,     BinaryOP,          String
     define_single_arg_op 0x23,  push_call,          CallOp,            Int32
     define_no_args_op    0x40,  push_echo,          EchoOp
-    define_no_args_op    0x41,  push_option,        OptionOp
+    define_single_arg_op 0x41,  push_option,        OptionOp,          Int32
     define_no_args_op    0x42,  push_wait,          WaitOp
 
     @op_names = {
