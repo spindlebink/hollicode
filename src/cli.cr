@@ -57,6 +57,7 @@ end
 begin
   File.open(input_file, "r") do |file|
     compiler = Hollicode::Compiler.new
+    compiler.compilation_path = File.dirname input_file
     success = compiler.compile file.gets_to_end
     if !success
       STDERR << "Compilation failed. Exiting." << "\n"

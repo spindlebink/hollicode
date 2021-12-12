@@ -26,6 +26,7 @@ module Hollicode
     NilLiteral
     If
     Else
+    Include
     Option
     Wait
     GreaterThan
@@ -344,6 +345,8 @@ module Hollicode
         push_token TokenType::If
       elsif word == "else"
         push_token TokenType::Else
+      elsif word == "include"
+        push_token TokenType::Include
       elsif word == "wait"
         push_token TokenType::Wait
       elsif word == "option"
