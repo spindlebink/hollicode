@@ -89,10 +89,6 @@ module Hollicode
     @header_operations = [] of Operation
     @operations = [] of Operation
 
-    def num_ops
-      @operations.size
-    end
-
     def get_plain_text
       String.build do |str|
         str << JSON.build do |json|
@@ -105,7 +101,11 @@ module Hollicode
         @operations.each do |operation|
           str << @op_names[operation.op_code]
           if operation.responds_to? :value
-            str << "\t" << operation.value
+            if (value_string = operation.value).is_a? String
+              str << "\t" << value_string.dump_unquoted
+            else
+              str << "\t" << operation.value
+            end
           end
           str << "\n"
         end
@@ -143,14 +143,8 @@ module Hollicode
       end
     end
 
-    def debug_print
-      @operations.each do |operation|
-        if operation.responds_to? :value
-          print operation.class.to_s, " ", operation.value, "\n"
-        else
-          puts operation.class.to_s
-        end
-      end
+    protected def num_ops
+      @operations.size
     end
   end
 end
