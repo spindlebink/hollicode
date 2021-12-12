@@ -1,6 +1,8 @@
 #
 # compiler.cr
 #
+# TODO: allow arguments to be passed to `[option]`
+#
 
 require "./scanner"
 require "./bytecode_generator"
