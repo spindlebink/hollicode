@@ -50,7 +50,6 @@ module Hollicode
     define_no_args_op    0x01,  push_pop,           PopOp
     define_single_arg_op 0x02,  push_jump,          JumpOp,            Int32
     define_single_arg_op 0x03,  push_jump_if_false, JumpIfFalseOp,     Int32
-    define_single_arg_op 0x04,  push_goto,          GotoOp,            Int32
     define_no_args_op    0x10,  push_nil,           NilOp
     define_single_arg_op 0x11,  push_boolean,       BooleanConstantOp, Bool
     define_single_arg_op 0x12,  push_number,        NumberConstantOp,  Float64
@@ -59,19 +58,8 @@ module Hollicode
     define_single_arg_op 0x15,  push_function,      FunctionOp,        String
     define_no_args_op    0x20,  push_not,           NotOp
     define_no_args_op    0x21,  push_negate,        NegateOp
-    define_single_arg_op 0x22,  push_call,          CallOp,            Int32
-    define_no_args_op    0x23,  push_add,           AddOp
-    define_no_args_op    0x24,  push_subtract,      SubtractOp
-    define_no_args_op    0x25,  push_multiply,      MultiplyOp
-    define_no_args_op    0x26,  push_divide,        DivideOp
-    define_no_args_op    0x27,  push_or,            OrOp
-    define_no_args_op    0x28,  push_and,           AndOp
-    define_no_args_op    0x29,  push_inequality,    NotEqualOp
-    define_no_args_op    0x2a,  push_equality,      EqualityOp
-    define_no_args_op    0x2b,  push_lesser_equal,  LessThanOrEqualOp
-    define_no_args_op    0x2c,  push_greater_equal, GreaterThanOrEqualOp
-    define_no_args_op    0x2d,  push_lesser,        LessThanOp
-    define_no_args_op    0x2e,  push_greater,       GreaterThanOp
+    define_single_arg_op 0x22,  push_binary_op,     BinaryOP,          String
+    define_single_arg_op 0x23,  push_call,          CallOp,            Int32
     define_no_args_op    0x40,  push_echo,          EchoOp
     define_no_args_op    0x41,  push_option,        OptionOp
     define_no_args_op    0x42,  push_wait,          WaitOp
@@ -81,7 +69,6 @@ module Hollicode
       0x01 => "POP",
       0x02 => "JMP",
       0x03 => "FJMP",
-      0x04 => "GOTO",
       0x10 => "NIL",
       0x11 => "BOOL",
       0x12 => "NUM",
@@ -90,19 +77,8 @@ module Hollicode
       0x15 => "GETF",
       0x20 => "NOT",
       0x21 => "NEG",
-      0x22 => "CALL",
-      0x23 => "ADD",
-      0x24 => "SUB",
-      0x25 => "MULT",
-      0x26 => "DIV",
-      0x27 => "OR",
-      0x28 => "AND",
-      0x29 => "NEQ",
-      0x2a => "EQ",
-      0x2b => "LEQ",
-      0x2c => "GEQ",
-      0x2d => "LESS",
-      0x2e => "MORE",
+      0x22 => "BOP",
+      0x23 => "CALL",
       0x40 => "ECHO",
       0x41 => "OPT",
       0x42 => "WAIT"

@@ -42,7 +42,7 @@ OptionParser.parse(arguments) do |parser|
   end
 
   if target_format.empty?
-    target_format = output_file.ends_with?(".hlj") ? "json" : output_file.ends_with?(".hlt") ? "text" : ""
+    target_format = output_file.ends_with?(".hlcj") ? "json" : output_file.ends_with?(".hlct") ? "text" : ""
     if target_format.empty?
       puts "Could not determine output target from file extension. Specify it using `-t TARGET` or `--target=TARGET`."
       exit 1
