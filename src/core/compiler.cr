@@ -50,6 +50,14 @@ module Hollicode
       end
     end
 
+    # Lookup expression.
+    class Lookup < Expression
+      getter parent : Expression
+      getter child : Expression
+      def initialize(@parent, @child)
+      end
+    end
+
     # Grouped expression.
     class Grouping < Expression
       getter expression : Expression
@@ -311,10 +319,10 @@ module Hollicode
     # Compiles a function call statement.
     private def compile_function_call_statement
       @compile_history << StatementType::FunctionCall
-      function_name_token = advance
+      function_name = parse_expression
       arguments = parse_directive_arguments
       arguments.each { |a| emit_expression a }
-      @bytecode.push_function function_name_token.lexeme
+      emit_expression function_name
       @bytecode.push_call arguments.size
       compile_indented_block
     end
@@ -336,8 +344,28 @@ module Hollicode
       when Expression::Unary
         emit_expression expr.right
         emit_unary_operator expr.operator
+      when Expression::Lookup
+        emit_lookup expr
       when Expression::Grouping
         emit_expression expr.expression
+      end
+    end
+
+    # Emits a constant or variable lookup to the bytecode writer.
+    private def emit_terminal(expr)
+      if expr.is_a? Expression::Terminal
+        case expr.value.type
+        when TokenType::NilLiteral
+          @bytecode.push_nil
+        when TokenType::BooleanLiteral
+          @bytecode.push_boolean expr.value.lexeme == "true" ? true : false
+        when TokenType::NumberLiteral
+          @bytecode.push_number expr.value.lexeme.to_f
+        when TokenType::StringLiteral
+          @bytecode.push_string expr.value.lexeme
+        when TokenType::Word
+          @bytecode.push_variable expr.value.lexeme
+        end
       end
     end
 
@@ -364,21 +392,30 @@ module Hollicode
       end
     end
 
-    # Emits a constant or variable lookup to the bytecode writer.
-    private def emit_terminal(expr)
-      if expr.is_a? Expression::Terminal
-        case expr.value.type
-        when TokenType::NilLiteral
-          @bytecode.push_nil
-        when TokenType::BooleanLiteral
-          @bytecode.push_boolean expr.value.lexeme == "true" ? true : false
-        when TokenType::NumberLiteral
-          @bytecode.push_number expr.value.lexeme.to_f
-        when TokenType::StringLiteral
-          @bytecode.push_string expr.value.lexeme
-        when TokenType::Word
-          @bytecode.push_variable expr.value.lexeme
+    # Emits associated op code for a lookup.
+    private def emit_lookup(expr)
+      emit_lookup_item expr.child
+      if (parent = expr.parent).is_a? Expression::Terminal
+        if parent.value.type.word?
+          @bytecode.push_variable parent.value.lexeme
+        else
+          report_error parent.value.line, "'#{parent.value.lexeme}' is not a variable"
         end
+      else
+        emit_lookup_item expr.parent
+      end
+      @bytecode.push_lookup
+    end
+
+    private def emit_lookup_item(expr)
+      if expr.is_a? Expression::Terminal
+        if expr.value.type.word?
+          @bytecode.push_string expr.value.lexeme
+        else
+          emit_expression expr
+        end
+      else
+        emit_expression expr
       end
     end
 
@@ -484,14 +521,24 @@ module Hollicode
       expr
     end
 
-    # unary -> ( ( NOT | - ) unary )* primary
+    # unary -> ( ( NOT | - ) unary )* lookup
     private def parse_unary
       if match_any TokenType::Not, TokenType::Minus
         operator = peek(-1).not_nil!
         right = parse_unary
         return Expression::Unary.new operator, right
       end
-      parse_primary
+      parse_lookup
+    end
+
+    # lookup -> primary ( . primary )*
+    private def parse_lookup
+      expr = parse_primary
+      while match_any TokenType::Dot
+        n = parse_primary
+        expr = Expression::Lookup.new expr, n
+      end
+      expr
     end
 
     # primary -> ( OPEN_PARENTHESIS expression CLOSE_PARENTHESIS ) | TERMINAL

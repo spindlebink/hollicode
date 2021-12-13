@@ -259,7 +259,7 @@ Specified in pseudocode. The variable `ip` represents the current position of th
 
 * `GETV name`
 
-	Obtain the value of a variable named `name` from the interpreter's environment and push its value to the top of the stack.
+	Obtain the value of a variable named `name` from the interpreter's environment and push its value to the top of the stack. Used to access both variables and functions, so if your language doesn't have first-class functions, you'll need to implement a function pointer equivalent.
 
 	> Make sure to do sufficient error checking, especially if you allow the interpreter's user to specify variable values themselves: either report an error and abort if a value isn't found, or push a `nil` to the stack. If a variable silently doesn't get added to the stack you'll likely get all sorts of errors.
 
@@ -269,17 +269,14 @@ Specified in pseudocode. The variable `ip` represents the current position of th
 	ip = ip + 1
 	```
 
-* `GETF name`
+* `LOOK`
 
-	Obtain a pointer to a function named `name` from the interpreter's environment and push it to the top of the stack.
-
-	If your language has first-class functions, you might implement this as a simple variable access+push. It's a separate instruction because not every language has first-class functions.
-
-	> Once again, make sure to do sufficient error checking, especially if you allow the user to specify function handles themselves.
+	Pop the top two items off the stack and push the result of a lookup on the first item using the second.
 
 	```
-	func = get_function_handle(name)
-	stack.push(func)
+	parent = stack.pop()
+	index = stack.pop()
+	stack.push(parent[index])
 	ip = ip + 1
 	```
 
