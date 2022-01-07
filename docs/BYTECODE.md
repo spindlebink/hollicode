@@ -192,7 +192,7 @@ Specified in pseudocode. The variable `ip` represents the current position of th
 
 * `FJMP distance`
 
-	Pop the top item off the stack and jump `distance` if it evaluates to `false`.
+	Peek at the top item on the stack and jump `distance` if it evaluates to `false`.
 
 	`distance` here may be positive or negative.
 
