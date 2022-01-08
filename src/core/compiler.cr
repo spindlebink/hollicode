@@ -92,6 +92,8 @@ module Hollicode
     @anchor_points = {} of String => Int32
     @compile_history = [] of StatementType
 
+    @found_wait = false
+
     property compilation_path = ""
 
     def initialize
@@ -113,6 +115,9 @@ module Hollicode
         compile_statement
       end
       patch_gotos_and_anchors
+      if !@found_wait
+        report_warning peek(-1).line, "no `wait` command found. The script may never yield."
+      end
       @compilation_okay
     end
 
@@ -316,6 +321,7 @@ module Hollicode
 
     # Compiles a `wait` statement.
     private def compile_wait_statement
+      @found_wait = true
       @compile_history << StatementType::Wait
       consume TokenType::Wait, "unknown control flow compilation error"
       consume TokenType::CloseExpression, "`wait` takes no arguments"

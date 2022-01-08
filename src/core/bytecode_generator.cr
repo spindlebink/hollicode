@@ -46,24 +46,24 @@ module Hollicode
       end
     end
 
-    define_no_args_op    0x00,  push_return,        ReturnOp
-    define_no_args_op    0x01,  push_pop,           PopOp
-    define_single_arg_op 0x02,  push_jump,          JumpOp,            Int32
-    define_single_arg_op 0x03,  push_jump_if_false, JumpIfFalseOp,     Int32
-    define_single_arg_op 0x04,  push_traced_jump,   TracedJumpOp,      Int32
-    define_no_args_op    0x10,  push_nil,           NilOp
-    define_single_arg_op 0x11,  push_boolean,       BooleanConstantOp, Bool
-    define_single_arg_op 0x12,  push_number,        NumberConstantOp,  Float64
-    define_single_arg_op 0x13,  push_string,        StringConstantOp,  String
-    define_single_arg_op 0x14,  push_variable,      VariableOp,        String
-    define_no_args_op    0x15,  push_lookup,        LookupOp
-    define_no_args_op    0x21,  push_not,           NotOp
-    define_no_args_op    0x22,  push_negate,        NegateOp
-    define_single_arg_op 0x23,  push_binary_op,     BinaryOP,          String
-    define_single_arg_op 0x40,  push_call,          CallOp,            Int32
-    define_no_args_op    0x41,  push_echo,          EchoOp
-    define_single_arg_op 0x42,  push_option,        OptionOp,          Int32
-    define_no_args_op    0x43,  push_wait,          WaitOp
+    define_no_args_op 0x00, push_return, ReturnOp
+    define_no_args_op 0x01, push_pop, PopOp
+    define_single_arg_op 0x02, push_jump, JumpOp, Int32
+    define_single_arg_op 0x03, push_jump_if_false, JumpIfFalseOp, Int32
+    define_single_arg_op 0x04, push_traced_jump, TracedJumpOp, Int32
+    define_no_args_op 0x10, push_nil, NilOp
+    define_single_arg_op 0x11, push_boolean, BooleanConstantOp, Bool
+    define_single_arg_op 0x12, push_number, NumberConstantOp, Float64
+    define_single_arg_op 0x13, push_string, StringConstantOp, String
+    define_single_arg_op 0x14, push_variable, VariableOp, String
+    define_no_args_op 0x15, push_lookup, LookupOp
+    define_no_args_op 0x21, push_not, NotOp
+    define_no_args_op 0x22, push_negate, NegateOp
+    define_single_arg_op 0x23, push_binary_op, BinaryOP, String
+    define_single_arg_op 0x40, push_call, CallOp, Int32
+    define_no_args_op 0x41, push_echo, EchoOp
+    define_single_arg_op 0x42, push_option, OptionOp, Int32
+    define_no_args_op 0x43, push_wait, WaitOp
 
     @op_names = {
       0x00 => "RET",
@@ -83,7 +83,7 @@ module Hollicode
       0x40 => "CALL",
       0x41 => "ECHO",
       0x42 => "OPT",
-      0x43 => "WAIT"
+      0x43 => "WAIT",
     }
 
     @header_operations = [] of Operation
