@@ -26,7 +26,7 @@ module Hollicode
   #
   # Expressions are the primary syntax tree node found in directives. They are a
   # more traditional parsed format which generally map to...well, *expressions*.
-  abstract class Expression    
+  abstract class Expression
     UNDEFINED = Empty.new
 
     # Empty expression.
@@ -38,6 +38,7 @@ module Hollicode
       getter left : Expression
       getter operator : Token
       getter right : Expression
+
       def initialize(@left, @operator, @right)
       end
     end
@@ -46,6 +47,7 @@ module Hollicode
     class Unary < Expression
       getter operator : Token
       getter right : Expression
+
       def initialize(@operator, @right)
       end
     end
@@ -54,6 +56,7 @@ module Hollicode
     class Lookup < Expression
       getter parent : Expression
       getter child : Expression
+
       def initialize(@parent, @child)
       end
     end
@@ -61,6 +64,7 @@ module Hollicode
     # Grouped expression.
     class Grouping < Expression
       getter expression : Expression
+
       def initialize(@expression)
       end
     end
@@ -68,13 +72,14 @@ module Hollicode
     # Terminal (i.e. non-reduceable) expression.
     class Terminal < Expression
       getter value : Token
+
       def initialize(@value)
       end
     end
   end
 
   class Compiler
-    # NEAR_TOKEN_ERROR_TRUNCATE_LIMIT = 16
+    MULTILINE_TEXT_SEPARATOR = " "
 
     @source_string = ""
     @bytecode : BytecodeGenerator
@@ -97,7 +102,7 @@ module Hollicode
     end
 
     # Compiles a string of source into bytecode.
-    
+
     # Returns `true` if compilation happened without errors or `false`
     # otherwise.
     def compile(@source_string)
@@ -202,9 +207,20 @@ module Hollicode
     # Compiles a text line statement.
     private def compile_text_line
       @compile_history << StatementType::TextLine
-      @bytecode.push_string peek(-1).lexeme
+      builder = String::Builder.new
+      builder << peek(-1).lexeme
+      if match_any TokenType::Indent
+        while !peek.type.unindent? && !peek.type.eof?
+          if !peek.type.text_line?
+            report_error peek.line, "invalid block text: expected text line but got #{peek.type}"
+          else
+            builder << MULTILINE_TEXT_SEPARATOR << advance.lexeme
+          end
+        end
+        consume TokenType::Unindent, "unknown block indentation error"
+      end
+      @bytecode.push_string builder.to_s
       @bytecode.push_echo
-      compile_indented_block
     end
 
     # Compiles an if statement (and any associated `else` statement).
@@ -407,6 +423,7 @@ module Hollicode
       @bytecode.push_lookup
     end
 
+    # Emits a single component of a lookup.
     private def emit_lookup_item(expr)
       if expr.is_a? Expression::Terminal
         if expr.value.type.word?
