@@ -84,7 +84,7 @@ Your workflow when implementing a narrative in Hollicode will be to write in Hol
 The compiler is written in the (perenially lovely) Crystal programming language. Once you've installed Crystal, compiling Hollicode is as simple as:
 
 ```sh
-crystal build --release src/cli.cr
+crystal build --release src/hollicode.cr
 ```
 
 You can then run the generated executable with `--help` to get a rundown on the compiler's features.
