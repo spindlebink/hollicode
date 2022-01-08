@@ -47,12 +47,8 @@ end
 if !should_exit
   if output_file.empty?
     if target_format.empty?
-      puts "defaulting to JSON"
       target_format = "json"
-    else
-      puts "target: #{target_format}"
     end
-    puts input_file.rstrip(".hlc")
     output_file = input_file.rstrip(".hlc") + (target_format == "json" ? ".hlcj" : ".hlct")
   end
 
