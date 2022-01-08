@@ -62,6 +62,16 @@ You can optionally begin a line of text with a single hyphen `-`. If you do so, 
 - # Sent instead in its entirety, hell yeah
 ```
 
+If a line of text is followed by an indented block of *only* text lines, the indented block will be appended to the line of text as a multiline string. Including anything but text lines in an indented block after a line of text results in a compilation error.
+
+```
+A line of text which continues a decently long way and which might benefit from
+	being broken up into multiple lines, splitting at the 80-character point
+	because that's a nice round number and standard for programming in general.
+```
+
+Multiline texts like this are concatenated with spaces in between them.
+
 ### Directives
 
 Directives embed function calls, variable evaluation, and control flow into your script. They are enclosed in `[square brackets]`.
