@@ -6,8 +6,18 @@ output_file = ""
 target_format = ""
 arguments = ARGV.dup
 
+should_exit = false
+
 OptionParser.parse(arguments) do |parser|
   parser.banner = "Usage: hollicode [arguments]"
+  parser.on "-v", "--version", "Show version information." do
+    puts "Hollicode compiler version #{Hollicode::LANGUAGE_VERSION}"
+    should_exit = true
+  end
+  parser.on "-h", "--help", "Show this help" do
+    puts parser
+    should_exit = true
+  end
   parser.on "-f FILE", "--file=FILE", "The input file." do |f|
     input_file = f
   end
@@ -17,29 +27,36 @@ OptionParser.parse(arguments) do |parser|
   parser.on "-t TARGET", "--target=TARGET", "The target format. Can be either `json` or `text`. Leave blank to guess based on file extension (`.hlcj` or `.hlct`)." do |t|
     target_format = t
   end
-  parser.on "-h", "--help", "Show this help" do |h|
-    puts parser
-    exit
-  end
 
-  if input_file.empty?
-    if arguments.size > 0
-      input_file = arguments[0]
-      arguments.shift
+  parser.unknown_args do |unknown|
+    unknown.each do |argument|
+      if input_file.empty?
+        input_file = argument
+      elsif output_file.empty?
+        output_file = argument
+      end
+    end
+
+    if !should_exit && unknown.size == 0 && input_file.empty? && output_file.empty?
+      puts parser
+      should_exit = true
     end
   end
+end
 
+if !should_exit
   if output_file.empty?
-    if arguments.size > 0
-      output_file = arguments[0]
-      arguments.shift
+    if target_format.empty?
+      puts "defaulting to JSON"
+      target_format = "json"
+    else
+      puts "target: #{target_format}"
     end
+    puts input_file.rstrip(".hlc")
+    output_file = input_file.rstrip(".hlc") + (target_format == "json" ? ".hlcj" : ".hlct")
   end
 
-  if output_file.empty?
-    output_file = input_file.rstrip(".hlc") + ".hlcj"
-    target_format = "json"
-  elsif target_format.empty?
+  if target_format.empty?
     target_format = output_file.ends_with?(".hlcj") ? "json" : output_file.ends_with?(".hlct") ? "text" : ""
     if target_format.empty?
       puts "Could not determine output target from file extension. Specify it using `-t TARGET` or `--target=TARGET`."
@@ -51,31 +68,26 @@ OptionParser.parse(arguments) do |parser|
     puts "Invalid target format '#{target_format}'. Valid options are:\n* json\n* text"
   end
 
-  if input_file.empty? || output_file.empty?
-    puts parser
-    exit
-  end
-end
-
-begin
-  File.open(input_file, "r") do |file|
-    compiler = Hollicode::Compiler.new
-    compiler.compilation_path = File.dirname input_file
-    success = compiler.compile file.gets_to_end
-    if !success
-      STDERR << "Compilation failed. Exiting." << "\n"
-      exit 1
-    else
-      File.open(output_file, "w") do |out_file|
-        if target_format == "json"
-          out_file << compiler.get_json
-        elsif target_format == "text"
-          out_file << compiler.get_plain_text
+  begin
+    File.open(input_file, "r") do |file|
+      compiler = Hollicode::Compiler.new
+      compiler.compilation_path = File.dirname input_file
+      success = compiler.compile file.gets_to_end
+      if !success
+        STDERR << "Compilation failed. Exiting." << "\n"
+        exit 1
+      else
+        File.open(output_file, "w") do |out_file|
+          if target_format == "json"
+            out_file << compiler.get_json
+          elsif target_format == "text"
+            out_file << compiler.get_plain_text
+          end
         end
       end
     end
+  rescue whoops
+    STDERR << "Could not read file '" << input_file << "'.\n"
+    exit 1
   end
-rescue whoops
-  STDERR << "Could not read file '" << input_file << "'.\n"
-  exit 1
 end
