@@ -13,7 +13,7 @@ module Hollicode
     Anchor
     Goto
     OpenExpression
-    CloseExpression    
+    CloseExpression
     OpenParenthesis
     CloseParenthesis
     Word
@@ -30,14 +30,14 @@ module Hollicode
     Option
     Wait
     Return
+    Equal
+    Not
     GreaterThan
     LessThan
     GreaterThanOrEqual
     LessThanOrEqual
-    Equal
     EqualEqual
     NotEqual
-    Not
     And
     Or
     Plus
@@ -55,13 +55,13 @@ module Hollicode
 
   # Scanner class. Takes a string of code and produces an array of tokens.
   class Scanner
-    TAB_SIZE = 8
-    ERROR_MESSAGE_BAD_UNINDENT = "unmatched indentation level"
-    ERROR_MESSAGE_UNTERMINATED_EXPRESSION = "mismatched expression brackets"
+    TAB_SIZE                               = 8
+    ERROR_MESSAGE_BAD_UNINDENT             = "unmatched indentation level"
+    ERROR_MESSAGE_UNTERMINATED_EXPRESSION  = "mismatched expression brackets"
     ERROR_MESSAGE_UNTERMINATED_PARENTHESES = "mismatched parentheses"
-    ERROR_MESSAGE_UNTERMINATED_STRING = "unterminated string"
-    ERROR_MESSAGE_MIXED_INDENTATION = "mixed tabs and spaces"
-    ERROR_MESSAGE_UNEXPECTED_CHARACTER = "unexpected character"
+    ERROR_MESSAGE_UNTERMINATED_STRING      = "unterminated string"
+    ERROR_MESSAGE_MIXED_INDENTATION        = "mixed tabs and spaces"
+    ERROR_MESSAGE_UNEXPECTED_CHARACTER     = "unexpected character"
 
     @source = ""
     @indent_stack = [] of Int32
@@ -166,6 +166,11 @@ module Hollicode
             advance_to_newline
             token_string = get_token_string.lchop("->").lstrip
             push_token TokenType::Goto, token_string
+          else
+            # explicit text line
+            advance_to_newline
+            token_string = get_token_string.lstrip
+            push_token TokenType::TextLine, token_string
           end
         when '>'
           advance_to_newline
@@ -174,11 +179,6 @@ module Hollicode
         when '#'
           # comment
           advance_to_newline
-        when '*'
-          # explicit text line
-          advance_to_newline
-          token_string = get_token_string.lchop("*").lstrip
-          push_token TokenType::TextLine, token_string
         when Char::ZERO
           advance
         else
@@ -207,7 +207,7 @@ module Hollicode
         when ')'
           push_token TokenType::CloseParenthesis
           paren_depth -= 1
-        when '"', '\'' 
+        when '"', '\''
           scan_string
         when ':'
           push_token TokenType::Colon
@@ -412,7 +412,7 @@ module Hollicode
         return true
       end
     end
-  
+
     # Gets the current character without advancing the index.
     private def peek(how_far = 0)
       if @source[@current_index + how_far]?
