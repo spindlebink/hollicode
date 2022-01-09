@@ -50,8 +50,8 @@ If a line isn't preceded by `#`, `>`, or `->`, it's interpreted as a line of tex
 Text lines begin after preceding indentation and continue to the end of the line. You don't need to escape special characters.
 ```
 > Conversation anchor point
-	A line of text displayed at this anchor point.
-	A line of text "with quotes" and !@#$% special characters.
+A line of text.
+A line of text "with quotes" and !@#$% special characters.
 ```
 
 You can optionally begin a line of text with a single hyphen `-`. If you do so, the line will be interpreted as beginning at the first non-whitespace character after it. You can use this behavior if for example a line needs to begin with `->`, `#`, `[`, or `>`.
@@ -81,7 +81,7 @@ Directives embed function calls, variable evaluation, and control flow into your
 Objection!
 ```
 
-When the interpreter executes the above example, it'll fetch a function named `fade_to_black` from the interpreter and call it, following it with the line "Objection!" sent as a regular text line.
+When the interpreter executes the above example, it'll fetch a variable named `finger_point_sting` from the interpreter and call it as a function, following it with the line "Objection!" sent as a regular text line.
 
 You can pass arguments to directives using formatting similar to that in most scripting languages. They must be separated by commas:
 
@@ -94,8 +94,7 @@ This was a vision, fresh and clear as a mountain stream, the mind revealing itse
 
 Directives also accomplish control flow:
 ```
-[roll_shivers]
-[if shivers_roll > 7]
+[if roll_shivers() > 7]
 	I am a fragment of the world spirit, the genius loci of Revachol.
 [else]
 	# failed the check; control falls through below
@@ -127,7 +126,7 @@ Directives support some syntactic sugar to round off the corners in a couple of 
 
 ### Options via `option` and `wait`
 
-To do.
+To be documented.
 
 ### Blocks
 
