@@ -95,7 +95,7 @@ module Hollicode
       push_custom_token TokenType::EOF
 
       # @tokens.each do |token|
-      # puts token.type
+      #   puts token.type
       # end
     end
 

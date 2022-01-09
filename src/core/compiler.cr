@@ -52,6 +52,19 @@ module Hollicode
       end
     end
 
+    # Function call expression.
+    class Call < Expression
+      getter method : Expression
+      getter arguments : Array(Expression)
+
+      def to_s(io : IO)
+        io << "<Call: " << method << ", " << arguments.size << " argument(s)>"
+      end
+
+      def initialize(@method, @arguments)
+      end
+    end
+
     # Lookup expression.
     class Lookup < Expression
       getter parent : Expression
@@ -73,8 +86,15 @@ module Hollicode
     class Terminal < Expression
       getter value : Token
 
+      def to_s(io : IO)
+        io << "<Terminal: '" << value.lexeme << "'>"
+      end
+
       def initialize(@value)
       end
+    end
+
+    class Value < Terminal
     end
   end
 
@@ -200,7 +220,7 @@ module Hollicode
         when TokenType::Return
           compile_return_statement
         when TokenType::Word
-          compile_function_call_statement
+          compile_directive_call_statement
         else
           report_error peek(-1).line, "unknown directive: expected function name but got #{peek.type}"
         end
@@ -310,7 +330,7 @@ module Hollicode
       @compile_history << StatementType::Option
       consume TokenType::Option, "unknown control flow compilation error"
       arguments = parse_directive_arguments
-      arguments.each { |a| emit_expression a }
+      arguments.reverse_each { |a| emit_expression a }
       @bytecode.push_option arguments.size
       block_start = @bytecode.num_ops
       option_jump = @bytecode.push_jump 0
@@ -339,13 +359,11 @@ module Hollicode
     end
 
     # Compiles a function call statement.
-    private def compile_function_call_statement
+    private def compile_directive_call_statement
       @compile_history << StatementType::FunctionCall
-      function_name = parse_expression
+      method = parse_lookup
       arguments = parse_directive_arguments
-      arguments.each { |a| emit_expression a }
-      emit_expression function_name
-      @bytecode.push_call arguments.size
+      emit_expression Expression::Call.new method, arguments
       compile_indented_block
     end
 
@@ -363,6 +381,10 @@ module Hollicode
         emit_expression expr.right
         emit_expression expr.left
         emit_binary_operator expr.operator
+      when Expression::Call
+        expr.arguments.reverse_each { |a| emit_expression a }
+        emit_expression expr.method
+        @bytecode.push_call expr.arguments.size
       when Expression::Unary
         emit_expression expr.right
         emit_unary_operator expr.operator
@@ -455,20 +477,11 @@ module Hollicode
     private def parse_directive_arguments
       starting_line = peek(-1).line
       arguments = [] of Expression
-      if match_any TokenType::Colon
-        consume TokenType::Word, "target of colon string capture must be an identifier"
-        arguments << Expression::Terminal.new Token.new TokenType::StringLiteral, peek(-1).lexeme, peek(-1).line
-        if !peek.type.close_expression?
-          consume TokenType::Comma, "arguments must be separated by commas"
-        end
-      end
       while !peek.type.close_expression?
         if peek.type.open_expression?
-          report_error peek.line, "invalid argument type: directive"
-          return [] of Expression
+          report_error peek.line, "cannot pass directive as argument to directive. Use function call: `f()`."
         elsif peek.type.eof?
           report_error starting_line, "directive never terminates"
-          return [] of Expression
         else
           arguments << parse_expression
           if !peek.type.close_expression?
@@ -477,19 +490,18 @@ module Hollicode
         end
       end
       consume TokenType::CloseExpression, "unknown control flow compilation error"
-      # pin any directive tag onto the end of the arguments list as a string
       if match_any TokenType::DirectiveTag
         arguments.unshift Expression::Terminal.new(Token.new(TokenType::StringLiteral, peek(-1).lexeme, peek(-1).line))
       end
-      arguments.reverse!
       arguments
     end
 
+    # expression -> and_or
     private def parse_expression
       parse_and_or
     end
 
-    # andor -> comparison ( ( AND | OR ) comparison )*
+    # and_or -> comparison ( ( AND | OR ) comparison )*
     private def parse_and_or
       expr = parse_equality
       while match_any TokenType::And, TokenType::Or
@@ -544,14 +556,44 @@ module Hollicode
       expr
     end
 
-    # unary -> ( ( NOT | - ) unary )* lookup
+    # unary -> ( ( NOT | - | : ) unary )* method_call
     private def parse_unary
       if match_any TokenType::Not, TokenType::Minus
         operator = peek(-1).not_nil!
         right = parse_unary
         return Expression::Unary.new operator, right
+      elsif match_any TokenType::Colon
+        if !match_any TokenType::Word, TokenType::BooleanLiteral
+          report_error peek.line, "colon capturing must take a word"
+        else
+          return Expression::Terminal.new(Token.new(TokenType::StringLiteral, peek(-1).lexeme, peek(-1).line))
+        end
       end
-      parse_lookup
+      parse_method_call
+    end
+
+    # method_call -> lookup ( OPEN_PARENTHESIS arguments? CLOSE_PARENTHESIS ) | arguments
+    private def parse_method_call
+      expr = parse_lookup
+      if match_any TokenType::OpenParenthesis
+        starting_line = peek(-1).line
+        arguments = [] of Expression
+        while !peek.type.close_parenthesis?
+          if peek.type.open_expression?
+            report_error peek.line, "cannot pass directive as argument to function. Use function call: `f()`."
+          elsif peek.type.eof?
+            report_error starting_line, "function call never terminates"
+          else
+            arguments << parse_expression
+            if !peek.type.close_parenthesis?
+              consume TokenType::Comma, "arguments must be separated by commas"
+            end
+          end
+        end
+        consume TokenType::CloseParenthesis, "unterminated method call"
+        expr = Expression::Call.new expr, arguments
+      end
+      expr
     end
 
     # lookup -> primary ( . primary )*
