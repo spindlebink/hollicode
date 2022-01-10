@@ -126,7 +126,26 @@ Directives support some syntactic sugar to round off the corners in a couple of 
 
 ### Options via `option` and `wait`
 
-To be documented.
+You can allow for user input using the `option` and `wait` directives. The `option` directive sets aside a block of code to be run when a given option is selected, and the `wait` directive signals to the interpreter that all options have been received and that it's time to yield execution and await user input.
+
+```
+What can I do for you?
+
+[option] Can you point me toward the mall?
+	Sure; it's that way.
+
+[option] Give me all your money!
+	Joke's on you: I don't have any money.
+
+[option] Nothing.
+	Stop wasting my time, then.
+
+[wait]
+
+# Execution falls through here after the option's been selected
+```
+
+When input has been received (check the interpreter-specific implementation for more details), execution will proceed from the option's block. If the option block terminates without a `goto` command (`-> anchor point`), execution will jump to the line after the `wait` directive.
 
 ### Blocks
 

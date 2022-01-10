@@ -87,16 +87,20 @@ To use Hollicode's compiled output in your game, you'll need an interpreter for 
 
 	```lua
 	function executeCurrentInstruction()
-		-- Depending on how you load your instructions, you might obtain the instruction name through string matching or you might get it from a JSON parser. A short explanation of formats shows up in the next bullet point or in `BYTECODE_SCHEMA.md`.
-		local instructionName = ... -- get current instruction name, however you might do it
+		-- Depending on how you load your instructions, you might obtain the
+		-- instruction name through string matching or you might get it from a JSON
+		-- parser. A short explanation of formats shows up in the next bullet point
+		-- or in `BYTECODE_SCHEMA.md`.
+		local instructionName = ... -- get current instruction name, however you
+		                            -- might do it
 
 		if instructionName == "POP" then
 			pop()
 			-- Be sure to increment the instruction pointer when we're done
 			ip = ip + 1
 		elseif instructionName == "NUM" then
-			local numberValue = ... -- get the argument to the instruction (i.e. the 10 in `NUM	10`--
-															-- once again, this'll be determined by the compilation format)
+			local numberValue = ... -- get the argument to the instruction (i.e. the 10 in `NUM	10`)
+			                        -- once again, this'll be determined by the compilation format)
 			push(tonumber(numberValue))
 			ip = ip + 1
 		elseif ... -- etc.; implement code for each operation
@@ -120,7 +124,8 @@ To use Hollicode's compiled output in your game, you'll need an interpreter for 
 
 	function executeCurrentInstruction()
 		local instructionName = ... -- see note above
-		local argument = ... -- see note above--also, the operation may not take an argument, depending on what it is
+		local argument = ... -- see note above--also, the operation may not take an
+		                     -- argument, depending on what it is
 
 		if operations[instructionName] then
 			-- Look up the corresponding instruction from the table and call it
@@ -289,7 +294,7 @@ Specified in pseudocode. The variable `ip` represents the current position of th
 	> GETV	arg3
 	> GETV	arg2
 	> GETV	arg1
-	> GETF	do_thing
+	> GETV	do_thing
 	> CALL	3
 	> ```
 
@@ -453,7 +458,7 @@ AWAIT INPUT
 
 In this example, the interpreter will stop execution at `AWAIT INPUT`, presumably offering the viable options to the engine that's using it. Then, the engine will receive input and instruct the interpreter to travel to the beginning of whichever option's been selected. When that option has been executed, control returns to the instruction after `AWAIT INPUT`.
 
-This process is how Hollicode's input bytecode works, with slightly different specifics. For example, the current iteration of the Lua reference interpreter manages options by calling an overrideable `onOption()` method when it comes across an `OPT` instruction. The programmer can use `onOption` to push options to a text buffer or otherwise create interactable objects for the player. Then, the interpreter provides an overrideable `onWait()` method which signals that the interpreter is awaiting input. When input's been received, the programmer signals to the interpreter to move to an option using `interpreter:selectOptionAndStart(optionIndex)`. Execution continues from there.
+This process is how Hollicode's input bytecode works, with slightly different specifics. For example, the current iteration of the Lua reference interpreter manages options by calling an overrideable `callbacks.option` method when it comes across an `OPT` instruction. The programmer can use `callbacks.option` to push options to a text buffer or otherwise create interactable objects for the player. Then, the interpreter provides an overrideable `callbacks.wait` method which signals that the interpreter is awaiting input. When input's been received, the programmer signals to the interpreter to move to an option using `interpreter:goToOption(optionIndex)` folowed by `interpreter:go()`. Execution continues from there.
 
 The point is that different languages or ecosystems will determine a useful workflow for `OPT` differently. It's up to you to implement option selection in a language-idiomatic way. What's important is that the interpreter's *semantics* for input line up with how the instructions are meant to work.
 
