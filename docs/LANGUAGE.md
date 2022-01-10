@@ -102,27 +102,27 @@ Directives also accomplish control flow:
 # Both branches end up here
 ```
 
-(Note that none of these functions, per the preamble, come built-in in the language--they'd be implemented in the game engine.)
+(Note that none of these functions, per the preamble, come built-in in the language--they'd be implemented in the game and hooked into via the interpreter.)
 
-Directives support some syntactic sugar to round off the corners in a couple of places:
-* Text after a directive is read to the end of the line and passed as a string as the **first** argument to the directive, placed in front of any arguments provided in the brackets.
-	```
-	# Will be evaluated as `delay_with_message "Message to delay with", 4`
-	[delay_with_message 4] Message to delay with
-	```
-* If the name of a function is immediately succeeded by a colon `:`, the first argument must be a valid identifier (beginning with a letter, then containing only alphanumeric characters or underscores) and will be captured as a string literal. This enables you for example to write a function `set_speaker` and send strings to it without them being interpreted as variable access.
-	```
-	# Retrieves the variable `bobby`, then calls `set_speaker` using the value of that variable
-	[set_speaker bobby]
-	# Calls `set_speaker` using the string "bobby"--equivalent to `[set_speaker "bobby"]`
-	[set_speaker: bobby]
-	```
-	Of course, you could also use post-directive text (previous bullet point) to do the same thing. It depends on which reads most clearly to you:
-	```
-	# Both equivalent to `[set_speaker "bobby"]`
-	[set_speaker: bobby]
-	[set_speaker] bobby
-	```
+For syntactic sugar, text after a directive is read to the end of the line and passed as a string as the **first** argument to the directive, placed in front of any arguments provided in the brackets.
+
+```
+# Will be evaluated as `delay_with_message "Message to delay with", 4`
+[delay_with_message 4] Message to delay with
+```
+
+### Colon string captures
+
+You can capture a single word as a string using a colon. This can improve readability for certain methods.
+
+```
+# Evaluated identically:
+[set_flag: variable_name]
+[set_flag :variable_name]
+[set_flag "variable_name"]
+```
+
+Colon captures only work for valid identifiers.
 
 ### Options via `option` and `wait`
 
@@ -150,6 +150,7 @@ When input has been received (check the interpreter-specific implementation for 
 ### Blocks
 
 Most types of statement can be followed by an indented block. In the case of text lines and anchors, doing so has no effect on control flow, as execution will simply proceed into the block. This means that using a block after these statements serves as an organizational convenience rather than a programmatic feature. Both of these segments evaluate the same, but there's a better sense of structure to the second one:
+
 ```
 > Conversation beginning
 Here is a sentence.
@@ -160,6 +161,7 @@ And here is another that follows it.
 More words here.
 > End of conversation
 ```
+
 ```
 > Conversation beginning
 	Here is a sentence.
@@ -170,11 +172,24 @@ More words here.
 		More words here.
 > End of conversation
 ```
- `if` statements and `option` statements behave differently. Their blocks denote code to be executed if an `if` check succeeds or if an option is selected respectively. This shouldn't be too hard to grasp:
+
+`if` statements and `option` statements behave differently. Their blocks denote code to be executed if an `if` check succeeds or if an option is selected respectively. This shouldn't be too hard to grasp:
+
 ```
-[if check]
+[if check_result]
 	Text to display only if `check` evaluates to `true`.
+	-> Anchor point #1
 [else]
 	Text to display otherwise.
-	[function_to_call_if_check_fails]
+	-> Anchor point #2
+```
+
+As mentioned earlier, block indentations following a line of text are interpreted as block strings and concatenated with spaces.
+
+```
+Block of text that can be optionally broken up into multiple lines for readability's sake
+
+Block of text that can be optionally
+	broken up into multiple lines for
+	readability's sake
 ```
