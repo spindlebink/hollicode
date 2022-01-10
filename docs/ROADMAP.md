@@ -34,9 +34,9 @@ if get_internal_variable(specific_hash_for_corresponding_line_in_source) == 0 th
 end
 ```
 
-## Think long and hard about variables/function calls
+## Think long and hard about variables
 
-The current workflow, fully directive-based, without any syntax for setting variables or expressions for calling functions, is minimal and reads easily, but I wonder if we could go just a *little* further toward more conventional variable structures. As is, we defer all keeping-track-of-variables stuff to interpreter implementations. I'm not saying it's *wrong*, but it might be worth further thought.
+The current workflow, fully directive-based, without any syntax for setting variables, is minimal and reads easily, but I wonder if we could go just a *little* further toward more conventional variable structures. As is, we defer all keeping-track-of-variables stuff to interpreter implementations. I'm not saying it's *wrong*, but it might be worth further thought.
 
 ## Think long and hard about options
 
@@ -50,8 +50,7 @@ Doing this would require a new instruction which'd go at the top of each compile
 
 ```
 STR	Anchor name
-INT	54
-ANCH
+ANCH 54
 ```
 
 The new instruction would pop the top two items off the stack and store them as an anchor mapping. The interpreter would then provide perhaps a `goto` method that'd look up a stored anchor position and begin execution from there.
