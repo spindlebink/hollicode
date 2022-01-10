@@ -94,9 +94,9 @@ module Hollicode
       end
       push_custom_token TokenType::EOF
 
-      # @tokens.each do |token|
-      #   puts token.type
-      # end
+      @tokens.each do |token|
+        puts token.type
+      end
     end
 
     # Scans the next token in the source string.
@@ -105,7 +105,20 @@ module Hollicode
       case c
       when ' ', '\t'
         if @newline
+          # Skip forward to the first non-skip character--the scanner doesn't
+          # store comments, empty lines, or unnecessary indents
+          while peek != Char::ZERO && (peek == ' ' || peek == '\t' || peek == '\n')
+            advance
+            if peek == '#'
+              advance_to_newline
+            end
+          end
+          # Now rewind to the beginning of that line
+          while peek(-1) != '\n' && peek(-1) != Char::ZERO
+            advance -1
+          end
           @newline = false
+
           # https://docs.python.org/3/reference/lexical_analysis.html#indentation
           indent_level = 0
           tab_stop = TAB_SIZE
@@ -179,6 +192,8 @@ module Hollicode
         when '#'
           # comment
           advance_to_newline
+          # token_string = get_token_string.lchop("#")
+          # push_token TokenType::Comment, token_string
         when Char::ZERO
           advance
         else
