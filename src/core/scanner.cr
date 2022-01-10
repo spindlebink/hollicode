@@ -94,9 +94,9 @@ module Hollicode
       end
       push_custom_token TokenType::EOF
 
-      @tokens.each do |token|
-        puts token.type
-      end
+      # @tokens.each do |token|
+      #   puts token.type
+      # end
     end
 
     # Scans the next token in the source string.
