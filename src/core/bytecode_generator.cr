@@ -128,9 +128,7 @@ module Hollicode
                   if operation.responds_to? :value
                     json.array do
                       json.string @op_names[operation.op_code]
-                      if operation.responds_to? :value
-                        operation.value.to_json json
-                      end
+                      operation.value.to_json json
                     end
                   else
                     json.string @op_names[operation.op_code]
@@ -140,6 +138,46 @@ module Hollicode
             end
           end
         end
+      end
+    end
+
+    def get_lua
+      String.build do |str|
+        str << "return {\n"
+        str << "\theader = {version = \"#{LANGUAGE_VERSION}\", bytecodeVersion = \"#{BYTECODE_FORMAT_VERSION}\"},\n"
+        if @operations.size == 0
+          str << "\tinstructions = {}"
+        else
+          str << "\tinstructions = {\n"
+          @operations.each_with_index do |operation, index|
+            if operation.responds_to? :value
+              str << "\t\t{"
+              write_lua_value str, @op_names[operation.op_code]
+              str << ", "
+              write_lua_value str, operation.value
+              str << "}"
+            else
+              str << "\t\t"
+              write_lua_value str, @op_names[operation.op_code]
+            end
+            if index != @operations.size - 1
+              str << ","
+            end
+            str << "\n"
+          end
+          str << "\t}\n"
+        end
+        str << "}"
+      end
+    end
+
+    protected def write_lua_value(io, value)
+      if value.is_a? String
+        io << "\"" << value.gsub({'"' => "\\\"", '\n' => "\\\n"}) << "\""
+      elsif value.is_a? Bool
+        io << (value ? "true" : "false")
+      else
+        io << value
       end
     end
 
