@@ -24,7 +24,7 @@ OptionParser.parse(arguments) do |parser|
   parser.on "-o OUTPUT", "--out=OUTPUT", "The output file." do |o|
     output_file = o
   end
-  parser.on "-t TARGET", "--target=TARGET", "The target format. Can be either `json` or `text`. Leave blank to guess based on file extension (`.hlcj` or `.hlct`)." do |t|
+  parser.on "-t TARGET", "--target=TARGET", "The target format. Can be `json`, `lua`, or `text`. Leave blank to guess based on file extension (`.json` or `.hlct`)." do |t|
     target_format = t
   end
 
@@ -49,11 +49,11 @@ if !should_exit
     if target_format.empty?
       target_format = "json"
     end
-    output_file = input_file.rstrip(".hlc") + (target_format == "json" ? ".hlcj" : ".hlct")
+    output_file = input_file.rstrip(".hlc") + (target_format == "json" ? ".json" : ".hlct")
   end
 
   if target_format.empty?
-    target_format = output_file.ends_with?(".hlcj") ? "json" : output_file.ends_with?(".hlct") ? "text" : ""
+    target_format = output_file.ends_with?(".json") ? "json" : output_file.ends_with?(".hlct") ? "text" : ""
     if target_format.empty?
       puts "Could not determine output target from file extension. Specify it using `-t TARGET` or `--target=TARGET`."
       exit 1

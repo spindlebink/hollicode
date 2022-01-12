@@ -81,7 +81,7 @@ end
 
 Hollicode defines a set of bytecode instructions which can articulate this sort of thing and a super simple syntax that generates those instructions.
 
-Your workflow when implementing a narrative in Hollicode will be to write in Hollicode's syntax (`.hlc` files), then compile to Hollicode's bytecode (JSON or plain text, `.hlcj` or `.hlct`), then load those compiled files in your game.
+Your workflow when implementing a narrative in Hollicode will be to write in Hollicode's syntax (`.hlc` files), then compile to Hollicode's bytecode (JSON or plain text, `.json` or `.hlct`), then load those compiled files in your game.
 
 ## Building
 
