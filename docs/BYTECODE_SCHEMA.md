@@ -47,3 +47,29 @@ JSON bytecode has the following fields:
 	* `version` - the version of the compiler used to generate the file
 	* `bytecodeVersion` - the version of the bytecode format used in the file. As the language develops, its bytecode instruction set may change, so it's important that any interpreter do a double-check that the bytecode version is correct.
 * `instructions` - an array of instructions. Each instruction will be either A) a string, if the instruction takes no arguments or B) an array containing two items, the instruction name and its argument.
+
+```json
+{
+	"header": {
+		"version": "0.1.0",
+		"bytecodeVersion": "0.1.0"
+	},
+	"instructions": {
+		["STR", "Argument to STR instruction"],
+		"ECHO"
+	}
+}
+```
+
+## Lua
+
+Lua bytecode exports identically to the JSON format, except it's written as a Lua module instead of JSON notation. All fields are the same.
+```lua
+return {
+	header = {version = "...", bytecodeVersion = "..."},
+	instructions = {
+		{"STR", "Argument to STR instruction"},
+		"ECHO"
+	}
+}
+```

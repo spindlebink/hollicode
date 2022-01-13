@@ -7,6 +7,9 @@ The compiler outputs domain-specific bytecode that runs off a very slim set of i
 * [VS Code language package](https://github.com/spindlebink/hollicode-vscode)
 * [Lua-based bytecode interpreter](https://github.com/spindlebink/hollicode-lua)
 
+**Two warnings:**
+* **Hollicode is in an early state.** Its bytecode format is powerful but still solidifying, and stuff is going to change before version 1.0.
+* **I'm working on my own games.** I'll likely respond and help out if you've got questions or issues, but supporting other users in the use of this tool isn't my primary goal right now.
 
 ## The project
 
@@ -20,8 +23,6 @@ Hollicode might be useful if....
 * You're writing a game with textual story or dialog
 * Your game would benefit from systemic, branching paths in that text
 * You don't want to represent writerly content in engine code
-
-**Fair warning: Hollicode is in an early state. Its bytecode format is powerful but still solidifying, and stuff is going to change before version 1.0.**
 
 ## Example
 
@@ -81,7 +82,7 @@ end
 
 Hollicode defines a set of bytecode instructions which can articulate this sort of thing and a super simple syntax that generates those instructions.
 
-Your workflow when implementing a narrative in Hollicode will be to write in Hollicode's syntax (`.hlc` files), then compile to Hollicode's bytecode (JSON or plain text, `.json` or `.hlct`), then load those compiled files in your game.
+Your workflow when implementing a narrative in Hollicode will be to write in Hollicode's syntax (`.hlc` files), then compile to Hollicode's bytecode (writable in multiple formats like JSON or plain text), then load those compiled files in your game.
 
 ## Building
 

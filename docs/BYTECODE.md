@@ -28,7 +28,7 @@ At the end of the first two lines, the interpreter's stack is `[2 1]`. After `AD
 
 Each operation is simple to execute, but, given a sufficiently knowledgeable compiler, any complex program can be reduced to them. The interpreter's job, then, is to take those operations, execute them correctly, and thereby produce the behavior we're looking for.
 
-The Hollicode compiler generates bytecode like this. It can output multiple formats--plain text or JSON right now; MessagePack may be forthcoming, I just don't have a need for it at the moment--but each format is only a different way of expressing this sequence of operations.
+The Hollicode compiler generates bytecode like this. It can output multiple formats--see `BYTECODE_SCHEMA.md` for a rundown---but each format is only a different way of expressing this sequence of operations.
 
 To use Hollicode's compiled output in your game, you'll need an interpreter for its bytecode. Implementing a  interpreter is one of the more straightforward parts of writing a programming language. Here'll be your steps for a Hollicode interpreter:
 
@@ -137,34 +137,7 @@ To use Hollicode's compiled output in your game, you'll need an interpreter for 
 	end
 	```
 
-* **Import instructions from a compiled Hollicode file.** Hollicode can compile to JSON or plain text at the moment. Both are easy to parse--basically every scripting language has either built-in JSON support or an easily-accessible package for it, and the plain text format is straightforward in its own right.
-	
-	The JSON format looks like this:
-	```jsonc
-	{
-		"header": {
-			// header info
-		},
-		// list of instructions:
-		"instructions": [
-			["GETV", "a"],
-			["NUM", 10],
-			["BOP", "+"]
-			// ...
-		]
-	}
-	```
-
-	The plaintext format looks like this:
-	
-	```txt
-	{header info}
-	GETV	a
-	NUM	10
-	BOP +
-	```
-	
-	Each operation name (`GETV`, `NUM`, `BOP` in this case) is guaranteed to be a string of characters with no spaces. If the operation takes an argument, the argument will be separated from the operation name by a tab character (`\t`).
+* **Import instructions from a compiled Hollicode file.** Hollicode can compile to several formats. Check `BYTECODE_SCHEMA.md` for a rundown.
 
 	Once you've loaded a list of the compiled instructions from a file, the interpreter should start at the first instruction and work its way from there per the `run`/`executeCurrentInstruction` loop.
 
