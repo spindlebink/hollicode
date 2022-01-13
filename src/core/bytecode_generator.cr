@@ -102,7 +102,7 @@ module Hollicode
           str << @op_names[operation.op_code]
           if operation.responds_to? :value
             if (value_string = operation.value).is_a? String
-              str << "\t" << value_string.dump_unquoted
+              str << "\t" << value_string.gsub({'"' => "\\\"", '\n' => "\\\n"})
             else
               str << "\t" << operation.value
             end
