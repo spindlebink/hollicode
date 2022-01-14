@@ -70,7 +70,7 @@ module Hollicode
     @start_index = 0
     @current_index = 0
 
-    @newline = false
+    @newline = true
 
     getter tokens
 
@@ -95,19 +95,23 @@ module Hollicode
       push_custom_token TokenType::EOF
 
       # @tokens.each do |token|
-      #   puts token.type
+      #   puts "#{token.line}: #{token.type}"
       # end
     end
 
     # Scans the next token in the source string.
     private def scan_next
       c = peek
+      # puts "scan next: '#{c}'"
       case c
       when ' ', '\t'
         if @newline
           # Skip forward to the first non-skip character--the scanner doesn't
           # store comments, empty lines, or unnecessary indents
           while peek != Char::ZERO && (peek == ' ' || peek == '\t' || peek == '\n')
+            if peek == '\n'
+              @current_line += 1
+            end
             advance
             if peek == '#'
               advance_to_newline
@@ -115,6 +119,7 @@ module Hollicode
           end
           # Now rewind to the beginning of that line
           while peek(-1) != '\n' && peek(-1) != Char::ZERO
+            # puts "back: '#{peek(-1)}' at index #{@current_index}"
             advance -1
           end
           @newline = false
@@ -430,7 +435,9 @@ module Hollicode
 
     # Gets the current character without advancing the index.
     private def peek(how_far = 0)
-      if @source[@current_index + how_far]?
+      if @current_index + how_far < 0
+        Char::ZERO
+      elsif @source[@current_index + how_far]?
         @source[@current_index + how_far]
       else
         Char::ZERO

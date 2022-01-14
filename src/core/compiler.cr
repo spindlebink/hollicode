@@ -247,6 +247,7 @@ module Hollicode
         while !peek.type.unindent? && !peek.type.eof?
           if !peek.type.text_line?
             report_error peek.line, "invalid block text: expected text line but got #{peek.type}"
+            break
           else
             builder << MULTILINE_TEXT_SEPARATOR << advance.lexeme
           end
