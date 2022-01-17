@@ -28,38 +28,29 @@ Hollicode might be useful if....
 
 Execution goes from the top down and stops to get user input when it hits a `wait` command.
 
-```
-# Beginning
+<pre><code><span style="color: #ff7edb;"><strong># Beginning</strong></span>
+<span style="color: #bbbbbb;">&nbsp;&nbsp;&nbsp;&nbsp;The market's full of vendors, as markets tend to be. Against a wall nearby, an old shopkeeper is polishing a Red Delicious while humming to herself. In front of her is a cart of fruit.</span>
 
-The market's full of vendors, as markets tend to be. Against a wall nearby, an old shopkeeper is polishing a Red Delicious while humming to herself. In front of her is a cart of fruit.
+<span style="color: #bbbbbb;">&nbsp;&nbsp;&nbsp;&nbsp;@</span><span style="color: #fede5d;">option</span><span style="color: #ff8b39;">: <strong>Approach the shopkeeper</strong></span>
+<span style="color: #bbbbbb;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You wander toward the shopkeeper.</span>
+<span style="color: #ff7edb;"><em>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&gt; Talk to shopkeeper</em></span>
+<span style="color: #bbbbbb;">&nbsp;&nbsp;&nbsp;&nbsp;@</span><span style="color: #fede5d;">option</span><span style="color: #ff8b39;">: <strong>Leave the market</strong></span>
+<span style="color: #bbbbbb;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Nothing really grabs your interest.</span>
+<span style="color: #ff7edb;"><em>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&gt; Leave</em></span>
+<span style="color: #bbbbbb;">&nbsp;&nbsp;&nbsp;&nbsp;@</span><span style="color: #fede5d;">wait</span>
 
-@option: Approach the shopkeeper
-	You wander toward the shopkeeper.
-	-> Talk to shopkeeper
+<span style="color: #ff7edb;"><strong># Talk to shopkeeper</strong></span>
+<span style="color: #bbbbbb;">&nbsp;&nbsp;&nbsp;&nbsp;She looks up.</span>
+<span style="color: #bbbbbb;">&nbsp;&nbsp;&nbsp;&nbsp;"Hello there," she says. "Can I get you anything?"</span>
 
-@option: Leave the market
-	Nothing really grabs your interest.
-	-> Leave
+<span style="color: #bbbbbb;">&nbsp;&nbsp;&nbsp;&nbsp;@</span><span style="color: #fede5d;">option</span><span style="color: #ff8b39;">: <strong>Are those apples for sale?</strong></span>
+<span style="color: #bbbbbb;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;She hands one to you. "You know what? This one's on me."</span>
+<span style="color: #bbbbbb;">&nbsp;&nbsp;&nbsp;&nbsp;@</span><span style="color: #fede5d;">option</span><span style="color: #ff8b39;">: <strong>No, just looking.</strong></span>
+<span style="color: #bbbbbb;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;She goes back to her polishing.</span>
+<span style="color: #bbbbbb;">&nbsp;&nbsp;&nbsp;&nbsp;@</span><span style="color: #fede5d;">wait</span>
 
-@wait
-
-# Talk to shopkeeper
-
-She looks up.
-"Hello there," she says. "Can I get you anything?"
-
-@option: Are those apples for sale?
-	She hands one to you. "You know what? This one's on me."
-
-@option: No, just looking.
-	She goes back to her polishing.
-
-@wait
-
-> Leave
-
-The shopkeeper nods as you depart.
-```
+<span style="color: #ff7edb;"><strong># Leave</strong></span>
+<span style="color: #bbbbbb;">&nbsp;&nbsp;&nbsp;&nbsp;The shopkeeper nods as you depart.</span></code></pre>
 
 ## How does it work?
 
