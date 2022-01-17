@@ -2,10 +2,6 @@
 
 Here are the things I'd like to add to Hollicode. Some of this is in development, it's just that Hollicode develops alongside my primary game dev project right now, and I don't want to fall into the "you either build an engine or build a game" pit.
 
-## Non-trivial example
-
-Complete with user-facing interpreter. The language is in development for a personal project, so I've got my own bytecode interpreter running, but it's unpolished as of yet. This'll probably be done in Lua with LÖVE, since they're direct and (somewhat) idiomatically agnostic.
-
 ## `once` keyword
 
 It's common enough in interactive narratives that it deserves to be in the language.
@@ -58,3 +54,7 @@ The new instruction would pop the top two items off the stack and store them as 
 ## Dedicated `INT` instruction
 
 All numbers are floating-point right now. Internal instructions which take integers provide them in the form of integers, but we don't have an integer instruction. Go figure.
+
+## Transpilation
+
+The current bytecode system for code generation is fine, but what about implementing a regular transpiler? It'd lead to probably easier integration of code with game engines, saving the trouble of writing an interpreter. Since Hollicode's largely experimental right now, it might be something worth looking into.
