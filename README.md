@@ -1,4 +1,4 @@
-# Hollicode
+# Hollicode v0.2.0
 
 Hollicode is a minimalistic, writer-first programming language for interactive narratives.
 
@@ -29,30 +29,32 @@ Hollicode might be useful if....
 Execution goes from the top down and stops to get user input when it hits a `wait` command.
 
 ```
+# Beginning
+
 The market's full of vendors, as markets tend to be. Against a wall nearby, an old shopkeeper is polishing a Red Delicious while humming to herself. In front of her is a cart of fruit.
 
-[option] Approach the shopkeeper
+@option: Approach the shopkeeper
 	You wander toward the shopkeeper.
 	-> Talk to shopkeeper
 
-[option] Leave the market
+@option: Leave the market
 	Nothing really grabs your interest.
 	-> Leave
 
-[wait]
+@wait
 
-> Talk to shopkeeper
+# Talk to shopkeeper
 
 She looks up.
 "Hello there," she says. "Can I get you anything?"
 
-[option] Are those apples for sale?
+@option: Are those apples for sale?
 	She hands one to you. "You know what? This one's on me."
 
-[option] No, just looking.
+@option: No, just looking.
 	She goes back to her polishing.
 
-[wait]
+@wait
 
 > Leave
 

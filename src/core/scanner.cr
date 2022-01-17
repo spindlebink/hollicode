@@ -12,8 +12,8 @@ module Hollicode
     DirectiveTag
     Anchor
     Goto
-    OpenExpression
-    CloseExpression
+    OpenDirective
+    CloseDirective
     OpenParenthesis
     CloseParenthesis
     Word
@@ -95,7 +95,7 @@ module Hollicode
       push_custom_token TokenType::EOF
 
       # @tokens.each do |token|
-      #   puts "#{token.line}: #{token.type}"
+      #   puts "#{token.line}: #{token.type} #{token.lexeme}"
       # end
     end
 
@@ -113,7 +113,7 @@ module Hollicode
               @current_line += 1
             end
             advance
-            if peek == '#'
+            if peek == '~' && peek(1) == '~'
               advance_to_newline
             end
           end
@@ -176,7 +176,7 @@ module Hollicode
           end
         end
         case c
-        when '['
+        when '@'
           scan_expression
         when '-'
           advance
@@ -188,17 +188,19 @@ module Hollicode
             # explicit text line
             advance_to_newline
             token_string = get_token_string.lstrip
-            push_token TokenType::TextLine, token_string
+            push_token TokenType::TextLine, token_string.lchop("-").lstrip
           end
-        when '>'
-          advance_to_newline
-          token_string = get_token_string.lchop(">").lstrip
-          push_token TokenType::Anchor, token_string
         when '#'
-          # comment
           advance_to_newline
-          # token_string = get_token_string.lchop("#")
-          # push_token TokenType::Comment, token_string
+          token_string = get_token_string.lchop('#').lstrip
+          push_token TokenType::Anchor, token_string
+        when '~'
+          # comment
+          if peek(1) == '~'
+            advance_to_newline
+            # token_string = get_token_string.lchop("~~")
+            # push_token TokenType::Comment, token_string
+          end
         when Char::ZERO
           advance
         else
@@ -212,15 +214,21 @@ module Hollicode
     private def scan_expression
       bracket_depth = 0
       paren_depth = 0
-      while !finished?
+      directive_done = false
+      # skip opening @
+      if peek == '@'
+        push_token TokenType::OpenDirective
+        advance
+      end
+      while !directive_done
         @start_index = @current_index
         case c = advance
-        when '['
-          push_token TokenType::OpenExpression
-          bracket_depth += 1
-        when ']'
-          push_token TokenType::CloseExpression
-          bracket_depth -= 1
+        when '@'
+          push_custom_token TokenType::Error, ERROR_MESSAGE_UNEXPECTED_CHARACTER, @current_line
+        when '\n', Char::ZERO
+          push_token TokenType::CloseDirective
+          @newline = true
+          directive_done = true
         when '('
           push_token TokenType::OpenParenthesis
           paren_depth += 1
@@ -230,7 +238,14 @@ module Hollicode
         when '"', '\''
           scan_string
         when ':'
-          push_token TokenType::Colon
+          while !finished?
+            if peek == '\n'
+              break
+            end
+            advance
+          end
+          lexeme = get_token_string.lchop(":").lstrip
+          push_custom_token TokenType::DirectiveTag, lexeme
         when '.'
           if peek.number?
             scan_number
@@ -273,22 +288,10 @@ module Hollicode
             scan_word
           end
         end
-        if bracket_depth == 0
-          if paren_depth > 0
-            push_custom_token TokenType::Error, ERROR_MESSAGE_UNTERMINATED_PARENTHESES
-          end
-          while peek == ' ' || peek == '\t'
-            advance
-          end
-          @start_index = @current_index
-          if peek != Char::ZERO && peek != '\n'
-            while peek != Char::ZERO && peek != '\n'
-              advance
-            end
-            push_token TokenType::DirectiveTag
-          end
-          return
-        end
+      end
+
+      if paren_depth > 0
+        push_custom_token TokenType::Error, ERROR_MESSAGE_UNTERMINATED_PARENTHESES
       end
     end
 
@@ -435,12 +438,10 @@ module Hollicode
 
     # Gets the current character without advancing the index.
     private def peek(how_far = 0)
-      if @current_index + how_far < 0
+      if @current_index + how_far < 0 || @current_index + how_far >= @source.size
         Char::ZERO
-      elsif @source[@current_index + how_far]?
-        @source[@current_index + how_far]
       else
-        Char::ZERO
+        @source[@current_index + how_far]
       end
     end
   end

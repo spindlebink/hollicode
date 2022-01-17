@@ -112,6 +112,7 @@ module Hollicode
     @anchor_points = {} of String => Int32
     @compile_history = [] of StatementType
 
+    @found_option = false
     @found_wait = false
 
     property compilation_path = ""
@@ -135,8 +136,8 @@ module Hollicode
         compile_statement
       end
       patch_gotos_and_anchors
-      if !@found_wait
-        report_warning peek(-1).line, "no `wait` command found. The script may never yield."
+      if @found_option && !@found_wait
+        report_warning peek(-1).line, "found `option` statement(s) but no `wait` statement so the script will never yield"
       end
       @compilation_okay
     end
@@ -213,9 +214,9 @@ module Hollicode
           @goto_commands[anchor_name] = [@bytecode.push_traced_jump @bytecode.num_ops]
         end
         compile_indented_block
-      when TokenType::OpenExpression
+      when TokenType::OpenDirective
         case peek.type
-        when TokenType::CloseExpression
+        when TokenType::CloseDirective
           report_warning peek.line, "empty directive. Ignoring."
           advance
         when TokenType::If
@@ -266,7 +267,7 @@ module Hollicode
 
       consume TokenType::If, "unknown control flow compilation error"
       compile_expression
-      consume TokenType::CloseExpression, "expected ']' to close `if`"
+      consume TokenType::CloseDirective, "expected newline to close `if`"
       compile_conditional
     end
 
@@ -294,9 +295,9 @@ module Hollicode
 
     # Compiles an `else` statement.
     private def compile_else_statement
-      if match_any TokenType::OpenExpression
+      if match_any TokenType::OpenDirective
         if match_any TokenType::Else
-          consume TokenType::CloseExpression, "`else` takes no arguments"
+          consume TokenType::CloseDirective, "`else` takes no arguments"
           compile_indented_block
         else
           # back up; we've entered an unrelated expression, not an `else`
@@ -313,8 +314,8 @@ module Hollicode
       file_path = ""
       if check_any TokenType::StringLiteral
         file_path = advance.lexeme
-        consume TokenType::CloseExpression, "expected ']' to close `include`"
-      elsif match_any TokenType::CloseExpression
+        consume TokenType::CloseDirective, "expected ']' to close `include`"
+      elsif match_any TokenType::CloseDirective
         consume TokenType::DirectiveTag, "no file path passed to `include` directive"
         file_path = peek(-1).lexeme
       else
@@ -337,6 +338,7 @@ module Hollicode
 
     # Compiles an `option` statement.
     private def compile_option_statement
+      @found_option = true
       @compile_history << StatementType::Option
       consume TokenType::Option, "unknown control flow compilation error"
       arguments = parse_directive_arguments
@@ -356,7 +358,7 @@ module Hollicode
       @found_wait = true
       @compile_history << StatementType::Wait
       consume TokenType::Wait, "unknown control flow compilation error"
-      consume TokenType::CloseExpression, "`wait` takes no arguments"
+      consume TokenType::CloseDirective, "`wait` takes no arguments"
       @bytecode.push_wait
       compile_indented_block
     end
@@ -365,7 +367,7 @@ module Hollicode
     private def compile_return_statement
       @compile_history << StatementType::Return
       consume TokenType::Return, "unknown control flow compilation error"
-      consume TokenType::CloseExpression, "`return` takes no arguments"
+      consume TokenType::CloseDirective, "`return` takes no arguments"
       @bytecode.push_return
       compile_indented_block
     end
@@ -489,22 +491,31 @@ module Hollicode
     private def parse_directive_arguments
       starting_line = peek(-1).line
       arguments = [] of Expression
-      while !peek.type.close_expression?
-        if peek.type.open_expression?
+      directive_tag : Token? = nil
+      while !peek.type.close_directive?
+        if peek.type.open_directive?
           report_error peek.line, "cannot pass directive as argument to directive. Use function call: `f()`."
+          break
         elsif peek.type.eof?
           report_error starting_line, "directive never terminates"
+          break
+        elsif peek.type.directive_tag?
+          directive_tag = peek
+          advance
         else
           arguments << parse_expression
-          if !peek.type.close_expression?
+          if !peek.type.close_directive? && !peek.type.directive_tag?
             consume TokenType::Comma, "arguments must be separated by commas"
           end
         end
       end
-      consume TokenType::CloseExpression, "unknown control flow compilation error"
-      if match_any TokenType::DirectiveTag
-        arguments.unshift Expression::Terminal.new(Token.new(TokenType::StringLiteral, peek(-1).lexeme, peek(-1).line))
+      consume TokenType::CloseDirective, "unknown control flow compilation error"
+      if tag = directive_tag
+        arguments.unshift Expression::Terminal.new(Token.new(TokenType::StringLiteral, tag.lexeme, tag.line))
       end
+      # if match_any TokenType::DirectiveTag
+      #   arguments.unshift Expression::Terminal.new(Token.new(TokenType::StringLiteral, peek(-1).lexeme, peek(-1).line))
+      # end
       arguments
     end
 
@@ -591,7 +602,7 @@ module Hollicode
         starting_line = peek(-1).line
         arguments = [] of Expression
         while !peek.type.close_parenthesis?
-          if peek.type.open_expression?
+          if peek.type.open_directive?
             report_error peek.line, "cannot pass directive as argument to function. Use function call: `f()`."
           elsif peek.type.eof?
             report_error starting_line, "function call never terminates"

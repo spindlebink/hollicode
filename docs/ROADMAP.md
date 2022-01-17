@@ -2,18 +2,22 @@
 
 Here are the things I'd like to add to Hollicode. Some of this is in development, it's just that Hollicode develops alongside my primary game dev project right now, and I don't want to fall into the "you either build an engine or build a game" pit.
 
+## Better error handling
+
+Hollicode's error messages leave a lot to be desired. We need better error handling.
+
 ## `once` keyword
 
 It's common enough in interactive narratives that it deserves to be in the language.
 
 ```
-> Anchor
-[once]
+# Anchor
+@once
 	Hey there! I'm saying this because execution has so far not reached this block.
-[else]
+@else
 	And here we are at the boring old repeated line.
 
-[wait]
+@wait
 -> Anchor
 ```
 
@@ -29,10 +33,6 @@ if get_internal_variable(specific_hash_for_corresponding_line_in_source) == 0 th
 	-- code compiled in the `once` block
 end
 ```
-
-## Think long and hard about variables
-
-The current workflow, fully directive-based, without any syntax for setting variables, is minimal and reads easily, but I wonder if we could go just a *little* further toward more conventional variable structures. As is, we defer all keeping-track-of-variables stuff to interpreter implementations. I'm not saying it's *wrong*, but it might be worth further thought.
 
 ## Think long and hard about options
 
