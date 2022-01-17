@@ -345,7 +345,9 @@ module Hollicode
       block_start = @bytecode.num_ops
       option_jump = @bytecode.push_jump 0
       compile_indented_block
-      @bytecode.push_return
+      if !@compile_history.last.goto?
+        @bytecode.push_return
+      end
       option_jump.value = @bytecode.num_ops - block_start
     end
 
