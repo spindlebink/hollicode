@@ -146,7 +146,7 @@ module Hollicode
         str << "return {\n"
         str << "\theader = {version = \"#{LANGUAGE_VERSION}\", bytecodeVersion = \"#{BYTECODE_FORMAT_VERSION}\"},\n"
         if @operations.size == 0
-          str << "\tinstructions = {}"
+          str << "\tinstructions = {}\n"
         else
           str << "\tinstructions = {\n"
           @operations.each_with_index do |operation, index|
